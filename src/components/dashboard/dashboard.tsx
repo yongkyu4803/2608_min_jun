@@ -49,7 +49,10 @@ export function Dashboard() {
   const leader = resultsOf(selected, "leader");
   const supreme = resultsOf(selected, "supreme");
   const topTurnout = [...turnouts].sort((a, b) => b.turnout - a.turnout)[0];
-  const leadingCandidate = [...leader].sort((a, b) => b.votes - a.votes)[0];
+  const leaderRanked = [...leader].sort((a, b) => b.votes - a.votes);
+  const leadingCandidate = leaderRanked[0];
+  const runnerUp = leaderRanked[1];
+  const leaderTotal = leader.reduce((acc, c) => acc + c.votes, 0);
   const userEntries = entries.filter((e) => !e.seeded);
 
   function toggleRegion(region: string) {
@@ -73,7 +76,7 @@ export function Dashboard() {
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex flex-col gap-1">
             <p className="text-xs" style={{ color: "var(--viz-muted)" }}>
-              제3차 당대표·최고위원 선출 순회경선
+              더불어민주당 제3차 당대표·최고위원 선출 순회경선
             </p>
             <h1 className="text-2xl font-semibold sm:text-3xl">
               권리당원 온라인투표 누적 현황
@@ -141,94 +144,41 @@ export function Dashboard() {
           ) : null}
         </div>
 
-        {/* 요약 — 히어로 숫자 1개 + 스탯 타일 */}
-        <div className="grid gap-4 lg:grid-cols-[1.15fr_2fr]">
-          <div
-            className="flex flex-col justify-center rounded-xl p-5"
-            style={{
-              background: "var(--viz-surface)",
-              border: "1px solid var(--viz-hairline)",
-            }}
-          >
-            <HeroFigure
-              label={`누적 투표율 · ${totals.regions}개 지역`}
-              value={pct(totals.turnout)}
-              caption={`${num(totals.voters)}명 투표 / 선거인 ${num(totals.electorate)}명`}
-            />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <StatTile label="총선거인수" value={`${num(totals.electorate)}명`} />
-            <StatTile label="총투표자수" value={`${num(totals.voters)}명`} />
-            <StatTile
-              label="최고 투표율 지역"
-              value={topTurnout ? topTurnout.region : "—"}
-              note={topTurnout ? pct(topTurnout.turnout) : undefined}
-            />
-          </div>
-        </div>
-
-        {/* 지역별 투표율 + 당대표 누적 득표 */}
-        <div className="grid gap-4 lg:grid-cols-2">
+        {/* 당대표 누적 득표율 — 이 대시보드의 헤드라인 */}
         <Panel
-          title="지역별 투표율"
-          subtitle="선거인수 대비 온라인투표 참여율"
+          title="당대표 누적 득표율"
+          subtitle={`집계 지역 ${totals.regions}곳 · 총 유효표 ${num(leaderTotal)}표`}
+          action={<Legend items={legendItems("leader")} />}
         >
           {asTable ? (
             <DataTable
-              columns={["지역", "총선거인수", "투표자수", "투표율"]}
-              rows={turnouts.map((t) => [
-                t.region,
-                num(t.electorate),
-                num(t.voters),
-                pct(t.turnout),
-              ])}
-            />
-          ) : turnouts.length === 1 ? (
-            <StatTile
-              label={`${turnouts[0].region} 투표율`}
-              value={pct(turnouts[0].turnout)}
-              note={`${num(turnouts[0].voters)}명 / ${num(turnouts[0].electorate)}명`}
-            />
-          ) : (
-            <BarList
-              max={Math.max(...turnouts.map((t) => t.turnout), 1)}
-              rows={turnouts.map<BarRow>((t) => ({
-                key: t.id,
-                label: t.region,
-                value: t.turnout,
-                valueLabel: pct(t.turnout),
-                colorVar: "--viz-s1",
-                tooltip: [
-                  { label: "총선거인수", value: `${num(t.electorate)}명` },
-                  { label: "투표자수", value: `${num(t.voters)}명` },
-                  { label: "투표율", value: pct(t.turnout) },
-                ],
-              }))}
-            />
-          )}
-        </Panel>
-
-          <Panel
-            title="당대표 누적 득표"
-            subtitle={
-              leadingCandidate
-                ? `선두 ${leadingCandidate.name} · ${pct(leadingCandidate.share)}`
-                : undefined
-            }
-            action={<Legend items={legendItems("leader")} />}
-          >
-            {asTable ? (
-              <DataTable
-                columns={["후보", "득표수", "득표율", "순위"]}
-                rows={leader.map((c) => [
+              columns={["순위", "후보", "득표수", "득표율"]}
+              rows={[...leader]
+                .sort((a, b) => a.rank - b.rank)
+                .map((c) => [
+                  `${c.rank}위`,
                   `${c.no}. ${c.name}`,
                   num(c.votes),
                   pct(c.share),
-                  `${c.rank}위`,
                 ])}
-              />
-            ) : (
+            />
+          ) : (
+            <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,17rem)_1fr]">
+              {leadingCandidate ? (
+                <HeroFigure
+                  label={`선두 · 기호 ${leadingCandidate.no} ${leadingCandidate.name}`}
+                  value={pct(leadingCandidate.share)}
+                  caption={
+                    runnerUp
+                      ? `${num(leadingCandidate.votes)}표 · 2위와 ${num(
+                          leadingCandidate.votes - runnerUp.votes,
+                        )}표 차`
+                      : `${num(leadingCandidate.votes)}표`
+                  }
+                />
+              ) : null}
               <BarList
+                labelWidth="5rem"
                 rows={leader.map<BarRow>((c) => ({
                   key: `leader-${c.no}`,
                   label: c.name,
@@ -243,9 +193,9 @@ export function Dashboard() {
                   ],
                 }))}
               />
-            )}
-          </Panel>
-        </div>
+            </div>
+          )}
+        </Panel>
 
         {/* 당대표 지역별 — 스몰 멀티플 */}
         <Panel
@@ -342,6 +292,54 @@ export function Dashboard() {
               흐리게 표시된 막대는 상위 {SUPREME_SEATS}명(당선권) 밖입니다. 순위는
               라벨로도 표시되므로 색에만 의존하지 않습니다.
             </p>
+          )}
+        </Panel>
+
+        {/* 참고 — 투표 참여 현황 */}
+        <Panel
+          title="투표 참여 현황"
+          subtitle="참고 지표 · 선거인수 대비 온라인투표 참여율"
+        >
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatTile
+              label={`누적 투표율 · ${totals.regions}개 지역`}
+              value={pct(totals.turnout)}
+              note={`${num(totals.voters)}명 / ${num(totals.electorate)}명`}
+            />
+            <StatTile label="총선거인수" value={`${num(totals.electorate)}명`} />
+            <StatTile
+              label="최고 투표율 지역"
+              value={topTurnout ? topTurnout.region : "—"}
+              note={topTurnout ? pct(topTurnout.turnout) : undefined}
+            />
+          </div>
+
+          {asTable ? (
+            <DataTable
+              columns={["지역", "총선거인수", "투표자수", "투표율"]}
+              rows={turnouts.map((t) => [
+                t.region,
+                num(t.electorate),
+                num(t.voters),
+                pct(t.turnout),
+              ])}
+            />
+          ) : turnouts.length === 1 ? null : (
+            <BarList
+              max={Math.max(...turnouts.map((t) => t.turnout), 1)}
+              rows={turnouts.map<BarRow>((t) => ({
+                key: t.id,
+                label: t.region,
+                value: t.turnout,
+                valueLabel: pct(t.turnout),
+                colorVar: "--viz-s1",
+                tooltip: [
+                  { label: "총선거인수", value: `${num(t.electorate)}명` },
+                  { label: "투표자수", value: `${num(t.voters)}명` },
+                  { label: "투표율", value: pct(t.turnout) },
+                ],
+              }))}
+            />
           )}
         </Panel>
 
