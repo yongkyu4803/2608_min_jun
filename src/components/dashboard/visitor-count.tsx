@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { num } from "@/lib/election";
 
-type Counts = { total: number; today: number; unique: number };
+type Counts = { total: number; today: number };
 
 /**
  * 방문 카운터. 마운트 시 1회 기록하고 갱신된 값을 표시한다.
@@ -43,7 +43,6 @@ export function VisitorCount() {
     >
       <Item label="누적 방문" value={counts.total} />
       <Item label="오늘" value={counts.today} />
-      <Item label="방문자" value={counts.unique} />
     </dl>
   );
 }
