@@ -1,6 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /** 차트 한 개를 담는 카드. 축 라벨까지 포함해 높이를 고정하지 않는다. */
@@ -114,11 +116,55 @@ export function StatTile({
         {value}
       </span>
       {note ? (
-        <span className="text-xs" style={{ color: "var(--viz-text-secondary)" }}>
+        <span
+          className="text-xs"
+          style={{ color: "var(--viz-text-secondary)" }}
+        >
           {note}
         </span>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * 표를 탭 구분(TSV)으로 클립보드에 복사한다.
+ * 엑셀·구글시트는 탭을 열 구분자로 읽으므로 붙여넣으면 셀로 나뉜다.
+ * 값은 화면에 보이는 그대로 담는다 — "69,980"·"39.08%" 모두 엑셀이 숫자로 인식한다.
+ */
+function CopyTableButton({
+  columns,
+  rows,
+}: {
+  columns: string[];
+  rows: (string | number)[][];
+}) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    const tsv = [columns, ...rows].map((r) => r.join("\t")).join("\n");
+    try {
+      await navigator.clipboard.writeText(tsv);
+      setCopied(true);
+      toast.success(`${rows.length}행이 복사되었습니다. 엑셀에 붙여넣으세요.`);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error(
+        "복사에 실패했습니다. 브라우저의 클립보드 권한을 확인해 주세요.",
+      );
+    }
+  }
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-7 text-xs"
+      onClick={copy}
+      title="표를 탭 구분 형식으로 복사 — 엑셀에 붙여넣으면 셀로 나뉩니다"
+    >
+      {copied ? "복사됨" : "표 복사"}
+    </Button>
   );
 }
 
@@ -131,49 +177,57 @@ export function DataTable({
   rows: (string | number)[][];
 }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[28rem] border-collapse text-sm">
-        <thead>
-          <tr style={{ borderBottom: "1px solid var(--viz-baseline)" }}>
-            {columns.map((c, i) => (
-              <th
-                key={c}
-                scope="col"
-                className={cn(
-                  "px-2 py-2 text-xs font-medium",
-                  i === 0 ? "text-left" : "text-right",
-                )}
-                style={{ color: "var(--viz-muted)" }}
-              >
-                {c}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, ri) => (
-            <tr key={ri} style={{ borderBottom: "1px solid var(--viz-grid)" }}>
-              {row.map((cell, ci) => (
-                <td
-                  key={ci}
+    <div className="flex flex-col gap-2">
+      <div className="flex justify-end">
+        <CopyTableButton columns={columns} rows={rows} />
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[28rem] border-collapse text-sm">
+          <thead>
+            <tr style={{ borderBottom: "1px solid var(--viz-baseline)" }}>
+              {columns.map((c, i) => (
+                <th
+                  key={c}
+                  scope="col"
                   className={cn(
-                    "px-2 py-2",
-                    ci === 0 ? "text-left" : "text-right tabular-nums",
+                    "px-2 py-2 text-xs font-medium",
+                    i === 0 ? "text-left" : "text-right",
                   )}
-                  style={{
-                    color:
-                      ci === 0
-                        ? "var(--viz-text-primary)"
-                        : "var(--viz-text-secondary)",
-                  }}
+                  style={{ color: "var(--viz-muted)" }}
                 >
-                  {cell}
-                </td>
+                  {c}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((row, ri) => (
+              <tr
+                key={ri}
+                style={{ borderBottom: "1px solid var(--viz-grid)" }}
+              >
+                {row.map((cell, ci) => (
+                  <td
+                    key={ci}
+                    className={cn(
+                      "px-2 py-2",
+                      ci === 0 ? "text-left" : "text-right tabular-nums",
+                    )}
+                    style={{
+                      color:
+                        ci === 0
+                          ? "var(--viz-text-primary)"
+                          : "var(--viz-text-secondary)",
+                    }}
+                  >
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
