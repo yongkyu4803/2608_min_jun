@@ -163,10 +163,11 @@ export function Dashboard() {
                 ])}
             />
           ) : (
-            <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,17rem)_1fr]">
+            <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,19rem)_1fr]">
               {leadingCandidate ? (
                 <HeroFigure
-                  label={`선두 · 기호 ${leadingCandidate.no} ${leadingCandidate.name}`}
+                  label={`선두 · 기호 ${leadingCandidate.no}`}
+                  headline={leadingCandidate.name}
                   value={pct(leadingCandidate.share)}
                   caption={
                     runnerUp

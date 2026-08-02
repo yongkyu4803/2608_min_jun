@@ -46,13 +46,18 @@ export function Panel({
   );
 }
 
-/** 숫자 하나가 곧 차트인 경우 — 뷰당 정확히 하나 */
+/**
+ * 숫자 하나가 곧 차트인 경우 — 뷰당 정확히 하나.
+ * headline(사람 이름 등)이 있으면 수치와 같은 비중으로 함께 세운다.
+ */
 export function HeroFigure({
   label,
+  headline,
   value,
   caption,
 }: {
   label: string;
+  headline?: string;
   value: string;
   caption: string;
 }) {
@@ -61,6 +66,14 @@ export function HeroFigure({
       <span className="text-xs" style={{ color: "var(--viz-muted)" }}>
         {label}
       </span>
+      {headline ? (
+        <span
+          className="text-4xl font-semibold leading-tight tracking-tight"
+          style={{ color: "var(--viz-text-primary)" }}
+        >
+          {headline}
+        </span>
+      ) : null}
       <span
         className="text-5xl font-semibold leading-none"
         style={{ color: "var(--viz-text-primary)" }}
