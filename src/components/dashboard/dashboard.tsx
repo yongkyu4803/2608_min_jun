@@ -27,8 +27,11 @@ import {
 import { useElectionStore } from "@/lib/use-election-store";
 import { cn } from "@/lib/utils";
 
-/** 후보 색은 기호(entity)에 고정 — 필터로 순위가 바뀌어도 색은 따라 움직이지 않는다. */
-const LEADER_COLORS = ["--viz-s1", "--viz-s2", "--viz-s3"];
+/**
+ * 후보 색은 기호(entity)에 고정 — 필터로 순위가 바뀌어도 색은 따라 움직이지 않는다.
+ * 당 색상(블루) 단일 계열이므로 색상 대신 명도 단계로 구분한다.
+ */
+const LEADER_COLORS = ["--viz-o1", "--viz-o2", "--viz-o3"];
 
 export function Dashboard() {
   const { entries, addEntry, removeEntry, reset } = useElectionStore();

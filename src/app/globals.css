@@ -118,9 +118,12 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Data-viz tokens — 검증된 팔레트                                      */
-/* validate_palette.js: light/dark 모두 all-pairs PASS                  */
-/* (light 모드 aqua는 3:1 미만 → 모든 막대에 직접 라벨 + 표 보기 제공)   */
+/* Data-viz tokens — 민주당 블루 단일 색상 팔레트                        */
+/*                                                                     */
+/* 후보 구분은 색상(hue)이 아니라 같은 블루의 명도 단계로 한다.          */
+/* validate_palette.js --ordinal 기준 light/dark 모두 PASS              */
+/* (명도 단조 · 인접 단계 ΔL ≥ 0.06 · 밝은 끝 대비 2:1 · 단일 색상)      */
+/* 계열이 명도로만 갈리므로 범례와 막대 끝 직접 라벨을 항상 함께 둔다.   */
 /* ------------------------------------------------------------------ */
 :root {
   --font-sans: var(--font-geist-sans);
@@ -134,9 +137,13 @@
   --viz-baseline: #c3c2b7;
   --viz-hairline: rgba(11, 11, 11, 0.1);
 
-  --viz-s1: #2a78d6; /* blue   */
-  --viz-s2: #eb6834; /* orange */
-  --viz-s3: #1baf7a; /* aqua   */
+  /* 단일 계열 차트의 기본 막대색 */
+  --viz-s1: #2a78d6; /* blue 450 */
+
+  /* 후보 구분용 블루 명도 램프 (기호 순) */
+  --viz-o1: #86b6ef; /* blue 250 */
+  --viz-o2: #2a78d6; /* blue 450 */
+  --viz-o3: #0d366b; /* blue 700 */
 }
 
 .dark {
@@ -149,9 +156,11 @@
   --viz-baseline: #383835;
   --viz-hairline: rgba(255, 255, 255, 0.1);
 
-  --viz-s1: #3987e5;
-  --viz-s2: #d95926;
-  --viz-s3: #199e70;
+  --viz-s1: #3987e5; /* blue 400 */
+
+  --viz-o1: #9ec5f4; /* blue 200 */
+  --viz-o2: #3987e5; /* blue 400 */
+  --viz-o3: #184f95; /* blue 600 */
 }
 
 @layer base {
