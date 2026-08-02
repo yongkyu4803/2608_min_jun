@@ -122,17 +122,7 @@ export const SEED_ENTRIES: RegionEntry[] = [
     seeded: true,
   },
 
-  /*
-   * 울산·부산·경남 권리당원 투표결과 보도자료.
-   *
-   * 최고위원은 기호 1~3(최민희·김용·김영호) 자료를 아직 확보하지 못해 null 로 둔다.
-   * 확보한 기호 4~8 득표수는 다음과 같으므로, 1~3 이 들어오는 대로 함께 채우면 된다.
-   *   서미화  울산 2,694 · 부산 6,039 · 경남 6,228 (합 14,961)
-   *   한민수  울산 2,680 · 부산 6,484 · 경남 6,896 (합 16,060)
-   *   이성윤  울산 2,069 · 부산 5,368 · 경남 5,379 (합 12,816)
-   *   박선원  울산 3,205 · 부산 6,528 · 경남 7,584 (합 17,317)
-   *   임미애  울산 1,030 · 부산 1,904 · 경남 2,831 (합  5,765)
-   */
+  /* 울산·부산·경남 권리당원 투표결과 보도자료 */
   {
     id: "seed-ulsan",
     region: "울산",
@@ -140,7 +130,10 @@ export const SEED_ENTRIES: RegionEntry[] = [
     date: "2026-08-02",
     electorate: 18_027,
     voters: 9_363,
-    votes: { leader: leader(972, 4_054, 4_337), supreme: null },
+    votes: {
+      leader: leader(972, 4_054, 4_337),
+      supreme: supreme(4_199, 2_309, 540, 2_694, 2_680, 2_069, 3_205, 1_030),
+    },
     seeded: true,
   },
   {
@@ -150,7 +143,10 @@ export const SEED_ENTRIES: RegionEntry[] = [
     date: "2026-08-02",
     electorate: 34_016,
     voters: 21_216,
-    votes: { leader: leader(1_689, 10_345, 9_182), supreme: null },
+    votes: {
+      leader: leader(1_689, 10_345, 9_182),
+      supreme: supreme(9_846, 5_254, 1_009, 6_039, 6_484, 5_368, 6_528, 1_904),
+    },
     seeded: true,
   },
   {
@@ -160,7 +156,19 @@ export const SEED_ENTRIES: RegionEntry[] = [
     date: "2026-08-02",
     electorate: 46_681,
     voters: 23_414,
-    votes: { leader: leader(2_468, 10_790, 10_156), supreme: null },
+    votes: {
+      leader: leader(2_468, 10_790, 10_156),
+      supreme: supreme(
+        10_651,
+        5_669,
+        1_590,
+        6_228,
+        6_896,
+        5_379,
+        7_584,
+        2_831,
+      ),
+    },
     seeded: true,
   },
 ];
