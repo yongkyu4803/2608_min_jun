@@ -2,14 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { AddEntryForm } from "@/components/dashboard/add-entry-form";
+import { VisitorCount } from "@/components/dashboard/visitor-count";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BarList, Legend, type BarRow } from "@/components/viz/bar-list";
-import {
-  DataTable,
-  HeroFigure,
-  Panel,
-  StatTile,
-} from "@/components/viz/panel";
+import { DataTable, HeroFigure, Panel, StatTile } from "@/components/viz/panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -73,7 +69,10 @@ export function Dashboard() {
   return (
     <div
       className="min-h-screen"
-      style={{ background: "var(--viz-plane)", color: "var(--viz-text-primary)" }}
+      style={{
+        background: "var(--viz-plane)",
+        color: "var(--viz-text-primary)",
+      }}
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-8 sm:px-8">
         {/* 헤더 */}
@@ -85,8 +84,12 @@ export function Dashboard() {
             <h1 className="text-2xl font-semibold sm:text-3xl">
               권리당원 온라인투표 누적 현황
             </h1>
-            <p className="text-sm" style={{ color: "var(--viz-text-secondary)" }}>
-              기본값은 중앙당 선거관리위원회 보도자료(충청권 · 부울경) 기준입니다.
+            <p
+              className="text-sm"
+              style={{ color: "var(--viz-text-secondary)" }}
+            >
+              기본값은 중앙당 선거관리위원회 보도자료(충청권 · 부울경)
+              기준입니다.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -208,46 +211,46 @@ export function Dashboard() {
           subtitle="지역마다 같은 척도(0–100%)로 비교"
           action={<Legend items={legendItems("leader")} />}
         >
-            {asTable ? (
-              <DataTable
-                columns={["지역", ...CANDIDATES.leader.map((c) => c.name)]}
-                rows={entriesWithRace(selected, "leader").map((e) => {
-                  const r = resultsOf([e], "leader");
-                  return [e.region, ...r.map((c) => pct(c.share))];
-                })}
-              />
-            ) : (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {entriesWithRace(selected, "leader").map((e) => (
-                  <div key={e.id} className="flex flex-col gap-2">
-                    <div className="flex items-baseline justify-between">
-                      <span className="text-xs font-medium">{e.region}</span>
-                      <span
-                        className="text-[11px] tabular-nums"
-                        style={{ color: "var(--viz-muted)" }}
-                      >
-                        {num(e.voters)}표
-                      </span>
-                    </div>
-                    <BarList
-                      max={100}
-                      labelWidth="3.25rem"
-                      rows={resultsOf([e], "leader").map<BarRow>((c) => ({
-                        key: `${e.id}-${c.no}`,
-                        label: c.name,
-                        value: c.share,
-                        valueLabel: pct(c.share, 1),
-                        colorVar: LEADER_COLORS[c.no - 1],
-                        tooltip: [
-                          { label: "득표수", value: `${num(c.votes)}표` },
-                          { label: "득표율", value: pct(c.share) },
-                        ],
-                      }))}
-                    />
+          {asTable ? (
+            <DataTable
+              columns={["지역", ...CANDIDATES.leader.map((c) => c.name)]}
+              rows={entriesWithRace(selected, "leader").map((e) => {
+                const r = resultsOf([e], "leader");
+                return [e.region, ...r.map((c) => pct(c.share))];
+              })}
+            />
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {entriesWithRace(selected, "leader").map((e) => (
+                <div key={e.id} className="flex flex-col gap-2">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs font-medium">{e.region}</span>
+                    <span
+                      className="text-[11px] tabular-nums"
+                      style={{ color: "var(--viz-muted)" }}
+                    >
+                      {num(e.voters)}표
+                    </span>
                   </div>
-                ))}
-              </div>
-            )}
+                  <BarList
+                    max={100}
+                    labelWidth="3.25rem"
+                    rows={resultsOf([e], "leader").map<BarRow>((c) => ({
+                      key: `${e.id}-${c.no}`,
+                      label: c.name,
+                      value: c.share,
+                      valueLabel: pct(c.share, 1),
+                      colorVar: LEADER_COLORS[c.no - 1],
+                      tooltip: [
+                        { label: "득표수", value: `${num(c.votes)}표` },
+                        { label: "득표율", value: pct(c.share) },
+                      ],
+                    }))}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </Panel>
 
         {/* 최고위원 */}
@@ -307,8 +310,8 @@ export function Dashboard() {
           )}
           {asTable ? null : (
             <p className="text-xs" style={{ color: "var(--viz-muted)" }}>
-              흐리게 표시된 막대는 상위 {SUPREME_SEATS}명(당선권) 밖입니다. 순위는
-              라벨로도 표시되므로 색에만 의존하지 않습니다.
+              흐리게 표시된 막대는 상위 {SUPREME_SEATS}명(당선권) 밖입니다.
+              순위는 라벨로도 표시되므로 색에만 의존하지 않습니다.
             </p>
           )}
         </Panel>
@@ -324,7 +327,10 @@ export function Dashboard() {
               value={pct(totals.turnout)}
               note={`${num(totals.voters)}명 / ${num(totals.electorate)}명`}
             />
-            <StatTile label="총선거인수" value={`${num(totals.electorate)}명`} />
+            <StatTile
+              label="총선거인수"
+              value={`${num(totals.electorate)}명`}
+            />
             <StatTile
               label="최고 투표율 지역"
               value={topTurnout ? topTurnout.region : "—"}
@@ -386,12 +392,19 @@ export function Dashboard() {
                   {e.votes.supreme === null ? (
                     <Badge variant="outline">최고위원 미입력</Badge>
                   ) : null}
-                  <span className="text-xs" style={{ color: "var(--viz-muted)" }}>
-                    {e.date} · 선거인 {num(e.electorate)}명 · 투표 {num(e.voters)}명
+                  <span
+                    className="text-xs"
+                    style={{ color: "var(--viz-muted)" }}
+                  >
+                    {e.date} · 선거인 {num(e.electorate)}명 · 투표{" "}
+                    {num(e.voters)}명
                   </span>
                 </div>
                 {e.seeded ? (
-                  <span className="text-xs" style={{ color: "var(--viz-muted)" }}>
+                  <span
+                    className="text-xs"
+                    style={{ color: "var(--viz-muted)" }}
+                  >
                     보도자료
                   </span>
                 ) : (
@@ -413,28 +426,38 @@ export function Dashboard() {
 
         <footer className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex flex-col gap-1">
-            <p className="text-xs" style={{ color: "var(--viz-text-secondary)" }}>
+            <p
+              className="text-xs"
+              style={{ color: "var(--viz-text-secondary)" }}
+            >
               출처: 더불어민주당 중앙당 선거관리위원회 보도자료 — 제3차
               당대표·최고위원 선출 순회경선 충청권(2026.08.01.) 및
               울산·부산·경남 권리당원 투표결과.
             </p>
             <p className="text-xs" style={{ color: "var(--viz-muted)" }}>
-              직접 입력한 누적값은 이 브라우저에만 저장되며, 공식 집계가 아닙니다.
+              직접 입력한 누적값은 이 브라우저에만 저장되며, 공식 집계가
+              아닙니다.
             </p>
           </div>
 
-          <p className="text-xs whitespace-nowrap" style={{ color: "var(--viz-muted)" }}>
-            Made by{" "}
-            <a
-              href="https://gqai.kr"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium underline underline-offset-2 transition-opacity hover:opacity-70"
-              style={{ color: "var(--viz-s1)" }}
+          <div className="flex flex-col gap-1 sm:items-end">
+            <VisitorCount />
+            <p
+              className="text-xs whitespace-nowrap"
+              style={{ color: "var(--viz-muted)" }}
             >
-              GQAI.kr
-            </a>
-          </p>
+              Made by{" "}
+              <a
+                href="https://gqai.kr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium underline underline-offset-2 transition-opacity hover:opacity-70"
+                style={{ color: "var(--viz-s1)" }}
+              >
+                GQAI.kr
+              </a>
+            </p>
+          </div>
         </footer>
       </div>
     </div>
