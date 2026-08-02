@@ -54,8 +54,11 @@ export type RegionEntry = {
   electorate: number;
   /** 투표자수 */
   voters: number;
-  /** 후보 기호 → 득표수 */
-  votes: Record<Race, Record<number, number>>;
+  /**
+   * 후보 기호 → 득표수.
+   * 해당 경선 자료가 아직 없는 지역은 null — 0표와 구분해야 득표율이 왜곡되지 않는다.
+   */
+  votes: Record<Race, Record<number, number> | null>;
   /** 보도자료에서 온 기본 데이터인지 (사용자 입력과 구분) */
   seeded?: boolean;
 };
@@ -118,6 +121,48 @@ export const SEED_ENTRIES: RegionEntry[] = [
     },
     seeded: true,
   },
+
+  /*
+   * 울산·부산·경남 권리당원 투표결과 보도자료.
+   *
+   * 최고위원은 기호 1~3(최민희·김용·김영호) 자료를 아직 확보하지 못해 null 로 둔다.
+   * 확보한 기호 4~8 득표수는 다음과 같으므로, 1~3 이 들어오는 대로 함께 채우면 된다.
+   *   서미화  울산 2,694 · 부산 6,039 · 경남 6,228 (합 14,961)
+   *   한민수  울산 2,680 · 부산 6,484 · 경남 6,896 (합 16,060)
+   *   이성윤  울산 2,069 · 부산 5,368 · 경남 5,379 (합 12,816)
+   *   박선원  울산 3,205 · 부산 6,528 · 경남 7,584 (합 17,317)
+   *   임미애  울산 1,030 · 부산 1,904 · 경남 2,831 (합  5,765)
+   */
+  {
+    id: "seed-ulsan",
+    region: "울산",
+    group: "부울경",
+    date: "2026-08-02",
+    electorate: 18_027,
+    voters: 9_363,
+    votes: { leader: leader(972, 4_054, 4_337), supreme: null },
+    seeded: true,
+  },
+  {
+    id: "seed-busan",
+    region: "부산",
+    group: "부울경",
+    date: "2026-08-02",
+    electorate: 34_016,
+    voters: 21_216,
+    votes: { leader: leader(1_689, 10_345, 9_182), supreme: null },
+    seeded: true,
+  },
+  {
+    id: "seed-gyeongnam",
+    region: "경남",
+    group: "부울경",
+    date: "2026-08-02",
+    electorate: 46_681,
+    voters: 23_414,
+    votes: { leader: leader(2_468, 10_790, 10_156), supreme: null },
+    seeded: true,
+  },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -151,11 +196,25 @@ export function totalsOf(entries: RegionEntry[]): Totals {
   };
 }
 
-/** 경선별 후보 누적 득표 — 배열 순서는 항상 기호순(색 고정용), rank는 별도 필드 */
+/** 해당 경선 자료가 있는 지역만 */
+export function entriesWithRace(entries: RegionEntry[], race: Race) {
+  return entries.filter((e) => e.votes[race] !== null);
+}
+
+/** 해당 경선 자료가 아직 없는 지역 이름 */
+export function regionsMissingRace(entries: RegionEntry[], race: Race) {
+  return entries.filter((e) => e.votes[race] === null).map((e) => e.region);
+}
+
+/**
+ * 경선별 후보 누적 득표 — 배열 순서는 항상 기호순(색 고정용), rank는 별도 필드.
+ * 자료가 없는 지역은 집계에서 제외한다 (0표로 넣으면 득표율이 왜곡된다).
+ */
 export function resultsOf(entries: RegionEntry[], race: Race): CandidateResult[] {
+  const scoped = entriesWithRace(entries, race);
   const votes = CANDIDATES[race].map((c) => ({
     ...c,
-    votes: sum(entries.map((e) => e.votes[race][c.no] ?? 0)),
+    votes: sum(scoped.map((e) => e.votes[race]?.[c.no] ?? 0)),
   }));
   const total = sum(votes.map((v) => v.votes));
   const ordered = [...votes].sort((a, b) => b.votes - a.votes);

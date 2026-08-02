@@ -17,8 +17,10 @@ import {
   CANDIDATES,
   RACE_LABEL,
   SUPREME_SEATS,
+  entriesWithRace,
   num,
   pct,
+  regionsMissingRace,
   resultsOf,
   totalsOf,
   turnoutByRegion,
@@ -49,6 +51,8 @@ export function Dashboard() {
   const leader = resultsOf(selected, "leader");
   const supreme = resultsOf(selected, "supreme");
   const topTurnout = [...turnouts].sort((a, b) => b.turnout - a.turnout)[0];
+  const supremeRegions = entriesWithRace(selected, "supreme");
+  const supremeMissing = regionsMissingRace(selected, "supreme");
   const leaderRanked = [...leader].sort((a, b) => b.votes - a.votes);
   const leadingCandidate = leaderRanked[0];
   const runnerUp = leaderRanked[1];
@@ -82,7 +86,7 @@ export function Dashboard() {
               권리당원 온라인투표 누적 현황
             </h1>
             <p className="text-sm" style={{ color: "var(--viz-text-secondary)" }}>
-              기본값은 2026-08-01 중앙당 선거관리위원회 보도자료(충청권) 기준입니다.
+              기본값은 중앙당 선거관리위원회 보도자료(충청권 · 부울경) 기준입니다.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -207,14 +211,14 @@ export function Dashboard() {
             {asTable ? (
               <DataTable
                 columns={["지역", ...CANDIDATES.leader.map((c) => c.name)]}
-                rows={selected.map((e) => {
+                rows={entriesWithRace(selected, "leader").map((e) => {
                   const r = resultsOf([e], "leader");
                   return [e.region, ...r.map((c) => pct(c.share))];
                 })}
               />
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {selected.map((e) => (
+                {entriesWithRace(selected, "leader").map((e) => (
                   <div key={e.id} className="flex flex-col gap-2">
                     <div className="flex items-baseline justify-between">
                       <span className="text-xs font-medium">{e.region}</span>
@@ -249,8 +253,21 @@ export function Dashboard() {
         {/* 최고위원 */}
         <Panel
           title="최고위원 누적 득표"
-          subtitle={`득표순 · 선출 정수 ${SUPREME_SEATS}명`}
+          subtitle={`득표순 · 선출 정수 ${SUPREME_SEATS}명 · 집계 지역 ${supremeRegions.length}곳`}
         >
+          {supremeMissing.length > 0 ? (
+            <p
+              className="rounded-lg px-3 py-2 text-xs"
+              style={{
+                color: "var(--viz-text-secondary)",
+                border: "1px solid var(--viz-hairline)",
+              }}
+            >
+              {supremeMissing.join("·")} 은(는) 최고위원 자료가 아직 입력되지
+              않아 이 집계에서 제외했습니다. 0표로 넣으면 득표율이 왜곡되기
+              때문입니다.
+            </p>
+          ) : null}
           {asTable ? (
             <DataTable
               columns={["순위", "후보", "득표수", "득표율"]}
@@ -366,6 +383,9 @@ export function Dashboard() {
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <span className="font-medium">{e.region}</span>
                   <Badge variant="secondary">{e.group}</Badge>
+                  {e.votes.supreme === null ? (
+                    <Badge variant="outline">최고위원 미입력</Badge>
+                  ) : null}
                   <span className="text-xs" style={{ color: "var(--viz-muted)" }}>
                     {e.date} · 선거인 {num(e.electorate)}명 · 투표 {num(e.voters)}명
                   </span>
@@ -394,8 +414,9 @@ export function Dashboard() {
         <footer className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex flex-col gap-1">
             <p className="text-xs" style={{ color: "var(--viz-text-secondary)" }}>
-              출처: 더불어민주당 중앙당 선거관리위원회 보도자료(2026.08.01.) —
-              제3차 당대표·최고위원 선출 순회경선 충청권 권리당원 온라인투표 결과.
+              출처: 더불어민주당 중앙당 선거관리위원회 보도자료 — 제3차
+              당대표·최고위원 선출 순회경선 충청권(2026.08.01.) 및
+              울산·부산·경남 권리당원 투표결과.
             </p>
             <p className="text-xs" style={{ color: "var(--viz-muted)" }}>
               직접 입력한 누적값은 이 브라우저에만 저장되며, 공식 집계가 아닙니다.

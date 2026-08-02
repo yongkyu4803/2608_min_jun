@@ -126,8 +126,12 @@ export function AddEntryForm({
       return toast.error("투표자수가 총선거인수보다 많을 수 없습니다.");
 
     const leaderVotes = parseVotes(draft.leader);
-    const supremeVotes = parseVotes(draft.supreme);
-    if (!leaderVotes || !supremeVotes)
+    // 최고위원 칸을 전부 비워두면 '자료 미입력'으로 저장한다 (0표와 구분).
+    const supremeBlank = Object.values(draft.supreme).every(
+      (v) => v.trim() === "",
+    );
+    const supremeVotes = supremeBlank ? null : parseVotes(draft.supreme);
+    if (!leaderVotes || (!supremeBlank && !supremeVotes))
       return toast.error("득표수는 0 이상의 숫자만 입력할 수 있습니다.");
 
     if (sums.leader > voters)
@@ -248,6 +252,11 @@ export function AddEntryForm({
                 <div className="flex items-baseline justify-between">
                   <h3 className="text-sm font-semibold">
                     {RACE_LABEL[race]} 득표수
+                    {race === "supreme" ? (
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                        비워두면 &lsquo;미입력&rsquo;으로 저장됩니다
+                      </span>
+                    ) : null}
                   </h3>
                   <span className="text-xs tabular-nums text-muted-foreground">
                     합계 {num(sums[race])}표

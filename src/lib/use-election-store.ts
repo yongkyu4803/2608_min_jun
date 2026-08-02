@@ -1,9 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SEED_ENTRIES, type RegionEntry } from "@/lib/election";
 
-const STORAGE_KEY = "chungcheong-primary:entries:v1";
+/**
+ * 사용자가 직접 추가한 지역만 저장한다.
+ * 보도자료 시드는 항상 코드에서 가져오므로, 시드가 늘어나도 예전 저장값에 가려지지 않는다.
+ */
+const STORAGE_KEY = "chungcheong-primary:user-entries:v2";
 
 function readStored(): RegionEntry[] | null {
   try {
@@ -24,31 +28,36 @@ function readStored(): RegionEntry[] | null {
  * SSR과 마크업을 맞추기 위해 첫 렌더는 항상 기본값, 마운트 후 저장값을 반영한다.
  */
 export function useElectionStore() {
-  const [entries, setEntries] = useState<RegionEntry[]>(SEED_ENTRIES);
+  const [userEntries, setUserEntries] = useState<RegionEntry[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     const stored = readStored();
-    if (stored) setEntries(stored);
+    if (stored) setUserEntries(stored.filter((e) => !e.seeded));
     setHydrated(true);
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-  }, [entries, hydrated]);
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(userEntries));
+  }, [userEntries, hydrated]);
 
   const addEntry = useCallback((entry: RegionEntry) => {
-    setEntries((prev) => [...prev, entry]);
+    setUserEntries((prev) => [...prev, entry]);
   }, []);
 
   const removeEntry = useCallback((id: string) => {
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+    setUserEntries((prev) => prev.filter((e) => e.id !== id));
   }, []);
 
   const reset = useCallback(() => {
-    setEntries(SEED_ENTRIES);
+    setUserEntries([]);
   }, []);
+
+  const entries = useMemo(
+    () => [...SEED_ENTRIES, ...userEntries],
+    [userEntries],
+  );
 
   return { entries, hydrated, addEntry, removeEntry, reset };
 }
