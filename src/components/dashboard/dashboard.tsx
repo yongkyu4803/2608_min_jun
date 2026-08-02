@@ -1,0 +1,405 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { AddEntryForm } from "@/components/dashboard/add-entry-form";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { BarList, Legend, type BarRow } from "@/components/viz/bar-list";
+import {
+  DataTable,
+  HeroFigure,
+  Panel,
+  StatTile,
+} from "@/components/viz/panel";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import {
+  CANDIDATES,
+  RACE_LABEL,
+  SUPREME_SEATS,
+  num,
+  pct,
+  resultsOf,
+  totalsOf,
+  turnoutByRegion,
+  type Race,
+} from "@/lib/election";
+import { useElectionStore } from "@/lib/use-election-store";
+import { cn } from "@/lib/utils";
+
+/** 후보 색은 기호(entity)에 고정 — 필터로 순위가 바뀌어도 색은 따라 움직이지 않는다. */
+const LEADER_COLORS = ["--viz-s1", "--viz-s2", "--viz-s3"];
+
+export function Dashboard() {
+  const { entries, addEntry, removeEntry, reset } = useElectionStore();
+  const [excluded, setExcluded] = useState<string[]>([]);
+  const [asTable, setAsTable] = useState(false);
+
+  const regions = useMemo(() => entries.map((e) => e.region), [entries]);
+  const selected = useMemo(
+    () => entries.filter((e) => !excluded.includes(e.region)),
+    [entries, excluded],
+  );
+
+  const totals = totalsOf(selected);
+  const turnouts = turnoutByRegion(selected);
+  const leader = resultsOf(selected, "leader");
+  const supreme = resultsOf(selected, "supreme");
+  const topTurnout = [...turnouts].sort((a, b) => b.turnout - a.turnout)[0];
+  const leadingCandidate = [...leader].sort((a, b) => b.votes - a.votes)[0];
+  const userEntries = entries.filter((e) => !e.seeded);
+
+  function toggleRegion(region: string) {
+    setExcluded((prev) =>
+      prev.includes(region)
+        ? prev.filter((r) => r !== region)
+        : // 마지막 하나까지 끄는 것은 막는다 (빈 대시보드 방지)
+          selected.length > 1
+          ? [...prev, region]
+          : prev,
+    );
+  }
+
+  return (
+    <div
+      className="min-h-screen"
+      style={{ background: "var(--viz-plane)", color: "var(--viz-text-primary)" }}
+    >
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-8 sm:px-8">
+        {/* 헤더 */}
+        <header className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <p className="text-xs" style={{ color: "var(--viz-muted)" }}>
+              제3차 당대표·최고위원 선출 순회경선
+            </p>
+            <h1 className="text-2xl font-semibold sm:text-3xl">
+              권리당원 온라인투표 누적 현황
+            </h1>
+            <p className="text-sm" style={{ color: "var(--viz-text-secondary)" }}>
+              기본값은 2026-08-01 중앙당 선거관리위원회 보도자료(충청권) 기준입니다.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAsTable((v) => !v)}
+              aria-pressed={asTable}
+            >
+              {asTable ? "차트로 보기" : "표로 보기"}
+            </Button>
+            <ThemeToggle />
+            <AddEntryForm existingRegions={regions} onAdd={addEntry} />
+          </div>
+        </header>
+
+        {/* 필터 — 모든 차트를 한 줄에서 동일하게 스코프한다 */}
+        <div
+          className="flex flex-wrap items-center gap-2 rounded-xl px-4 py-3"
+          style={{
+            background: "var(--viz-surface)",
+            border: "1px solid var(--viz-hairline)",
+          }}
+        >
+          <span className="text-xs" style={{ color: "var(--viz-muted)" }}>
+            집계 지역
+          </span>
+          {entries.map((e) => {
+            const on = !excluded.includes(e.region);
+            return (
+              <button
+                key={e.id}
+                type="button"
+                onClick={() => toggleRegion(e.region)}
+                aria-pressed={on}
+                className={cn(
+                  "rounded-full px-3 py-1 text-xs transition-colors",
+                  on ? "font-medium" : "",
+                )}
+                style={{
+                  background: on ? "var(--viz-s1)" : "transparent",
+                  color: on ? "#ffffff" : "var(--viz-text-secondary)",
+                  border: `1px solid ${on ? "transparent" : "var(--viz-hairline)"}`,
+                }}
+              >
+                {e.region}
+              </button>
+            );
+          })}
+          {excluded.length > 0 ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setExcluded([])}
+            >
+              전체 선택
+            </Button>
+          ) : null}
+        </div>
+
+        {/* 요약 — 히어로 숫자 1개 + 스탯 타일 */}
+        <div className="grid gap-4 lg:grid-cols-[1.15fr_2fr]">
+          <div
+            className="flex flex-col justify-center rounded-xl p-5"
+            style={{
+              background: "var(--viz-surface)",
+              border: "1px solid var(--viz-hairline)",
+            }}
+          >
+            <HeroFigure
+              label={`누적 투표율 · ${totals.regions}개 지역`}
+              value={pct(totals.turnout)}
+              caption={`${num(totals.voters)}명 투표 / 선거인 ${num(totals.electorate)}명`}
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatTile label="총선거인수" value={`${num(totals.electorate)}명`} />
+            <StatTile label="총투표자수" value={`${num(totals.voters)}명`} />
+            <StatTile
+              label="최고 투표율 지역"
+              value={topTurnout ? topTurnout.region : "—"}
+              note={topTurnout ? pct(topTurnout.turnout) : undefined}
+            />
+          </div>
+        </div>
+
+        {/* 지역별 투표율 + 당대표 누적 득표 */}
+        <div className="grid gap-4 lg:grid-cols-2">
+        <Panel
+          title="지역별 투표율"
+          subtitle="선거인수 대비 온라인투표 참여율"
+        >
+          {asTable ? (
+            <DataTable
+              columns={["지역", "총선거인수", "투표자수", "투표율"]}
+              rows={turnouts.map((t) => [
+                t.region,
+                num(t.electorate),
+                num(t.voters),
+                pct(t.turnout),
+              ])}
+            />
+          ) : turnouts.length === 1 ? (
+            <StatTile
+              label={`${turnouts[0].region} 투표율`}
+              value={pct(turnouts[0].turnout)}
+              note={`${num(turnouts[0].voters)}명 / ${num(turnouts[0].electorate)}명`}
+            />
+          ) : (
+            <BarList
+              max={Math.max(...turnouts.map((t) => t.turnout), 1)}
+              rows={turnouts.map<BarRow>((t) => ({
+                key: t.id,
+                label: t.region,
+                value: t.turnout,
+                valueLabel: pct(t.turnout),
+                colorVar: "--viz-s1",
+                tooltip: [
+                  { label: "총선거인수", value: `${num(t.electorate)}명` },
+                  { label: "투표자수", value: `${num(t.voters)}명` },
+                  { label: "투표율", value: pct(t.turnout) },
+                ],
+              }))}
+            />
+          )}
+        </Panel>
+
+          <Panel
+            title="당대표 누적 득표"
+            subtitle={
+              leadingCandidate
+                ? `선두 ${leadingCandidate.name} · ${pct(leadingCandidate.share)}`
+                : undefined
+            }
+            action={<Legend items={legendItems("leader")} />}
+          >
+            {asTable ? (
+              <DataTable
+                columns={["후보", "득표수", "득표율", "순위"]}
+                rows={leader.map((c) => [
+                  `${c.no}. ${c.name}`,
+                  num(c.votes),
+                  pct(c.share),
+                  `${c.rank}위`,
+                ])}
+              />
+            ) : (
+              <BarList
+                rows={leader.map<BarRow>((c) => ({
+                  key: `leader-${c.no}`,
+                  label: c.name,
+                  badge: String(c.no),
+                  value: c.votes,
+                  valueLabel: `${num(c.votes)}표 · ${pct(c.share)}`,
+                  colorVar: LEADER_COLORS[c.no - 1],
+                  tooltip: [
+                    { label: "득표수", value: `${num(c.votes)}표` },
+                    { label: "득표율", value: pct(c.share) },
+                    { label: "순위", value: `${c.rank}위` },
+                  ],
+                }))}
+              />
+            )}
+          </Panel>
+        </div>
+
+        {/* 당대표 지역별 — 스몰 멀티플 */}
+        <Panel
+          title="당대표 지역별 득표율"
+          subtitle="지역마다 같은 척도(0–100%)로 비교"
+          action={<Legend items={legendItems("leader")} />}
+        >
+            {asTable ? (
+              <DataTable
+                columns={["지역", ...CANDIDATES.leader.map((c) => c.name)]}
+                rows={selected.map((e) => {
+                  const r = resultsOf([e], "leader");
+                  return [e.region, ...r.map((c) => pct(c.share))];
+                })}
+              />
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {selected.map((e) => (
+                  <div key={e.id} className="flex flex-col gap-2">
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-xs font-medium">{e.region}</span>
+                      <span
+                        className="text-[11px] tabular-nums"
+                        style={{ color: "var(--viz-muted)" }}
+                      >
+                        {num(e.voters)}표
+                      </span>
+                    </div>
+                    <BarList
+                      max={100}
+                      labelWidth="3.25rem"
+                      rows={resultsOf([e], "leader").map<BarRow>((c) => ({
+                        key: `${e.id}-${c.no}`,
+                        label: c.name,
+                        value: c.share,
+                        valueLabel: pct(c.share, 1),
+                        colorVar: LEADER_COLORS[c.no - 1],
+                        tooltip: [
+                          { label: "득표수", value: `${num(c.votes)}표` },
+                          { label: "득표율", value: pct(c.share) },
+                        ],
+                      }))}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+        </Panel>
+
+        {/* 최고위원 */}
+        <Panel
+          title="최고위원 누적 득표"
+          subtitle={`득표순 · 선출 정수 ${SUPREME_SEATS}명`}
+        >
+          {asTable ? (
+            <DataTable
+              columns={["순위", "후보", "득표수", "득표율"]}
+              rows={[...supreme]
+                .sort((a, b) => a.rank - b.rank)
+                .map((c) => [
+                  `${c.rank}위`,
+                  `${c.no}. ${c.name}`,
+                  num(c.votes),
+                  pct(c.share),
+                ])}
+            />
+          ) : (
+            <BarList
+              labelWidth="8rem"
+              rows={[...supreme]
+                .sort((a, b) => a.rank - b.rank)
+                .map<BarRow>((c) => ({
+                  key: `supreme-${c.no}`,
+                  label: c.name,
+                  badge: `${c.rank}위`,
+                  value: c.votes,
+                  valueLabel: `${num(c.votes)}표 · ${pct(c.share)}`,
+                  colorVar: "--viz-s1",
+                  dim: c.rank > SUPREME_SEATS,
+                  tooltip: [
+                    { label: "기호", value: String(c.no) },
+                    { label: "득표수", value: `${num(c.votes)}표` },
+                    { label: "득표율", value: pct(c.share) },
+                    {
+                      label: "선출권",
+                      value: c.rank <= SUPREME_SEATS ? "당선권" : "당선권 밖",
+                    },
+                  ],
+                }))}
+            />
+          )}
+          {asTable ? null : (
+            <p className="text-xs" style={{ color: "var(--viz-muted)" }}>
+              흐리게 표시된 막대는 상위 {SUPREME_SEATS}명(당선권) 밖입니다. 순위는
+              라벨로도 표시되므로 색에만 의존하지 않습니다.
+            </p>
+          )}
+        </Panel>
+
+        {/* 입력한 데이터 관리 */}
+        <Panel
+          title="누적 집계에 포함된 지역"
+          subtitle="직접 입력한 지역은 삭제할 수 있습니다"
+          action={
+            userEntries.length > 0 ? (
+              <Button variant="ghost" size="sm" onClick={reset}>
+                보도자료 값으로 초기화
+              </Button>
+            ) : null
+          }
+        >
+          <div className="flex flex-col gap-2">
+            {entries.map((e) => (
+              <div
+                key={e.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2"
+                style={{ border: "1px solid var(--viz-hairline)" }}
+              >
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="font-medium">{e.region}</span>
+                  <Badge variant="secondary">{e.group}</Badge>
+                  <span className="text-xs" style={{ color: "var(--viz-muted)" }}>
+                    {e.date} · 선거인 {num(e.electorate)}명 · 투표 {num(e.voters)}명
+                  </span>
+                </div>
+                {e.seeded ? (
+                  <span className="text-xs" style={{ color: "var(--viz-muted)" }}>
+                    보도자료
+                  </span>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => removeEntry(e.id)}
+                  >
+                    삭제
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+          <Separator />
+          <p className="text-xs" style={{ color: "var(--viz-muted)" }}>
+            출처: 더불어민주당 중앙당 선거관리위원회 보도자료(2026.08.01.) —
+            제3차 당대표·최고위원 선출 순회경선 충청권 권리당원 온라인투표 결과.
+          </p>
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+function legendItems(race: Race) {
+  return CANDIDATES[race].map((c, i) => ({
+    key: `${RACE_LABEL[race]}-${c.no}`,
+    label: c.name,
+    colorVar: LEADER_COLORS[i],
+  }));
+}
