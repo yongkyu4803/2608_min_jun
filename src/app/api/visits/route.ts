@@ -26,6 +26,25 @@ function redisOrNull() {
   return new Redis({ url, token });
 }
 
+/** 집계 없이 현재 카운트만 읽는다 (같은 세션의 재방문·새로고침용). */
+export async function GET() {
+  const redis = redisOrNull();
+  if (!redis) {
+    return NextResponse.json({ available: false }, { status: 503 });
+  }
+
+  const [total, today] = await redis.mget<[number | null, number | null]>(
+    TOTAL_KEY,
+    `visits:day:${todayKST()}`,
+  );
+
+  return NextResponse.json({
+    available: true,
+    total: total ?? 0,
+    today: today ?? 0,
+  });
+}
+
 /**
  * 방문 1회를 기록하고 갱신된 카운트를 돌려준다.
  * 저장하는 값은 누적/일자 카운터 두 정수뿐 — 방문자를 식별하는 정보도,

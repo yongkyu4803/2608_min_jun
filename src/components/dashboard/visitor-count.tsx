@@ -14,13 +14,13 @@ export function VisitorCount() {
 
   useEffect(() => {
     let cancelled = false;
-    // 개발 중 StrictMode 이중 실행으로 두 번 세는 것을 막는다.
+    // 한 세션에서 방문은 한 번만 집계하되, 재방문·새로고침 때도 숫자는 계속 보여준다.
+    // (집계는 POST, 조회는 GET — 가드가 조회까지 막으면 카운터가 사라진다.)
     const sessionKey = "chungcheong-primary:visit-logged";
-    const already = window.sessionStorage.getItem(sessionKey) === "1";
+    const alreadyCounted = window.sessionStorage.getItem(sessionKey) === "1";
     window.sessionStorage.setItem(sessionKey, "1");
-    if (already) return;
 
-    fetch("/api/visits", { method: "POST" })
+    fetch("/api/visits", { method: alreadyCounted ? "GET" : "POST" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!cancelled && data?.available) setCounts(data);
