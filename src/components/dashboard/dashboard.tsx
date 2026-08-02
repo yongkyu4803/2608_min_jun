@@ -388,12 +388,34 @@ export function Dashboard() {
               </div>
             ))}
           </div>
-          <Separator />
-          <p className="text-xs" style={{ color: "var(--viz-muted)" }}>
-            출처: 더불어민주당 중앙당 선거관리위원회 보도자료(2026.08.01.) —
-            제3차 당대표·최고위원 선출 순회경선 충청권 권리당원 온라인투표 결과.
-          </p>
         </Panel>
+
+        <Separator className="mt-2" />
+
+        <footer className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex flex-col gap-1">
+            <p className="text-xs" style={{ color: "var(--viz-text-secondary)" }}>
+              출처: 더불어민주당 중앙당 선거관리위원회 보도자료(2026.08.01.) —
+              제3차 당대표·최고위원 선출 순회경선 충청권 권리당원 온라인투표 결과.
+            </p>
+            <p className="text-xs" style={{ color: "var(--viz-muted)" }}>
+              직접 입력한 누적값은 이 브라우저에만 저장되며, 공식 집계가 아닙니다.
+            </p>
+          </div>
+
+          <p className="text-xs whitespace-nowrap" style={{ color: "var(--viz-muted)" }}>
+            Made by{" "}
+            <a
+              href="https://gqai.kr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium underline underline-offset-2 transition-opacity hover:opacity-70"
+              style={{ color: "var(--viz-s1)" }}
+            >
+              GQAI.kr
+            </a>
+          </p>
+        </footer>
       </div>
     </div>
   );
