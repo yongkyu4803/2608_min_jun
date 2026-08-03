@@ -19,9 +19,21 @@ export type Banner = {
  * 권장 비율은 3:1 (예: 1080×360) — 세 칸 모두 같은 높이로 맞춰진다.
  */
 export const BANNERS: [Banner | null, Banner | null, Banner | null] = [
-  null,
-  null,
-  null,
+  {
+    src: "/banners/gqai-newslens.png",
+    alt: "GQAI NewsLens 정책 인텔리전스 사이트로 이동",
+    href: "https://news.gqai.kr",
+  },
+  {
+    src: "/banners/gqai-billlens.png",
+    alt: "GQAI BillLens 법안 검색 사이트로 이동",
+    href: "https://bills.gqai.kr",
+  },
+  {
+    src: "/banners/gqai-vibe-coding.png",
+    alt: "GQAI Vibe Coding 실전 AI 코딩 교육 사이트로 이동",
+    href: "https://vibecoding.gqai.kr",
+  },
 ];
 
 export const BANNER_ASPECT = "3 / 1";

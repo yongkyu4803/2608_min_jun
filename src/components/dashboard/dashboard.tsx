@@ -103,19 +103,16 @@ export function Dashboard() {
         {/* 헤더 */}
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <p className="text-xs" style={{ color: "var(--viz-muted)" }}>
-              더불어민주당 제3차 당대표·최고위원 선출 순회경선
-            </p>
-            <h1 className="text-2xl font-semibold sm:text-3xl">
-              권리당원 온라인투표 누적 현황
-            </h1>
+            {/* 12px 의 120% = 14.4px */}
             <p
-              className="text-sm"
+              className="text-[0.9rem]"
               style={{ color: "var(--viz-text-secondary)" }}
             >
-              기본값은 중앙당 선거관리위원회 보도자료(충청권 · 부울경)
-              기준입니다.
+              제3차 당대표·최고위원 선출 순회경선
             </p>
+            <h1 className="text-2xl font-semibold sm:text-3xl">
+              더불어민주당 권리당원 온라인투표 누적 현황
+            </h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button
