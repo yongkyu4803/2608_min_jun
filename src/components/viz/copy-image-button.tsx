@@ -16,6 +16,13 @@ function canWriteImage() {
   );
 }
 
+/** 다음 페인트까지 기다린다 — 무거운 작업 전에 상태 변화를 화면에 반영하기 위함 */
+function nextPaint() {
+  return new Promise<void>((resolve) =>
+    requestAnimationFrame(() => setTimeout(resolve, 0)),
+  );
+}
+
 function download(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -45,6 +52,10 @@ export function CopyImageButton({
     if (!node) return;
 
     setBusy(true);
+    // 렌더링은 메인 스레드를 수백 ms 점유한다. 먼저 '만드는 중' 상태를 그리게
+    // 한 프레임 양보해야 클릭이 멈춘 것처럼 보이지 않는다.
+    await nextPaint();
+
     try {
       const blob = await toBlob(node, {
         // 화면 배율의 2배로 떠서 발표자료에 넣어도 또렷하게
