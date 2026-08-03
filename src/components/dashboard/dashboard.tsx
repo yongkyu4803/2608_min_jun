@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AddEntryForm } from "@/components/dashboard/add-entry-form";
+import { KoreaMap, type MapDatum } from "@/components/dashboard/korea-map";
 import { VisitorCount } from "@/components/dashboard/visitor-count";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BarList, Legend, type BarRow } from "@/components/viz/bar-list";
@@ -35,6 +36,7 @@ export function Dashboard() {
   const { entries, addEntry, removeEntry, reset } = useElectionStore();
   const [excluded, setExcluded] = useState<string[]>([]);
   const [asTable, setAsTable] = useState(false);
+  const [mapMetric, setMapMetric] = useState<"leader" | "turnout">("leader");
 
   const regions = useMemo(() => entries.map((e) => e.region), [entries]);
   const selected = useMemo(
@@ -54,6 +56,28 @@ export function Dashboard() {
   const runnerUp = leaderRanked[1];
   const leaderTotal = leader.reduce((acc, c) => acc + c.votes, 0);
   const userEntries = entries.filter((e) => !e.seeded);
+
+  /** 지도용 — 지역마다 선두 후보와 투표율을 함께 담아 두 지표를 한 번에 처리한다 */
+  const mapData = useMemo<MapDatum[]>(
+    () =>
+      entriesWithRace(selected, "leader").map((e) => {
+        const top = [...resultsOf([e], "leader")].sort(
+          (a, b) => b.votes - a.votes,
+        )[0];
+        const turnout = e.electorate > 0 ? (e.voters / e.electorate) * 100 : 0;
+        return {
+          region: e.region,
+          value: mapMetric === "leader" ? top.share : turnout,
+          caption: mapMetric === "leader" ? `선두 ${top.name}` : undefined,
+          detail: [
+            { label: `선두 ${top.name}`, value: pct(top.share) },
+            { label: "투표율", value: pct(turnout) },
+            { label: "투표자수", value: `${num(e.voters)}명` },
+          ],
+        };
+      }),
+    [selected, mapMetric],
+  );
 
   function toggleRegion(region: string) {
     setExcluded((prev) =>
@@ -252,6 +276,62 @@ export function Dashboard() {
                 </div>
               ))}
             </div>
+          )}
+        </Panel>
+
+        {/* 지도 */}
+        <Panel
+          title="지도로 보기"
+          subtitle={
+            mapMetric === "leader"
+              ? "지역별 선두 후보의 득표율 — 진할수록 높음"
+              : "지역별 투표율 — 진할수록 높음"
+          }
+          copyImage
+          action={
+            <div
+              className="flex rounded-lg p-0.5"
+              style={{ border: "1px solid var(--viz-hairline)" }}
+            >
+              {(
+                [
+                  ["leader", "선두 득표율"],
+                  ["turnout", "투표율"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setMapMetric(key)}
+                  aria-pressed={mapMetric === key}
+                  className="rounded-md px-2.5 py-1 text-xs transition-colors"
+                  style={{
+                    background:
+                      mapMetric === key ? "var(--viz-s1)" : "transparent",
+                    color:
+                      mapMetric === key
+                        ? "#ffffff"
+                        : "var(--viz-text-secondary)",
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          }
+        >
+          {asTable ? (
+            <DataTable
+              columns={["지역", "선두 후보", "선두 득표율", "투표율"]}
+              rows={mapData.map((d) => [
+                d.region,
+                d.caption ?? "—",
+                d.detail[0]?.value ?? "—",
+                d.detail[1]?.value ?? "—",
+              ])}
+            />
+          ) : (
+            <KoreaMap data={mapData} />
           )}
         </Panel>
 

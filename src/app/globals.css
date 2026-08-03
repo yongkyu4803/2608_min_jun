@@ -144,6 +144,13 @@
   --viz-o1: #86b6ef; /* blue 250 */
   --viz-o2: #2a78d6; /* blue 450 */
   --viz-o3: #0d366b; /* blue 700 */
+
+  /* 지도 농도 4단계 (순차 램프) + 자료 없음 */
+  --viz-c1: #86b6ef;
+  --viz-c2: #3987e5;
+  --viz-c3: #1c5cab;
+  --viz-c4: #0d366b;
+  --viz-c0: #eceae4; /* 미개표 */
 }
 
 .dark {
@@ -161,6 +168,12 @@
   --viz-o1: #9ec5f4; /* blue 200 */
   --viz-o2: #3987e5; /* blue 400 */
   --viz-o3: #184f95; /* blue 600 */
+
+  --viz-c1: #9ec5f4;
+  --viz-c2: #5598e7;
+  --viz-c3: #256abf;
+  --viz-c4: #184f95;
+  --viz-c0: #26262a; /* 미개표 */
 }
 
 @layer base {
