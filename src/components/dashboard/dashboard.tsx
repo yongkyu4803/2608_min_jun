@@ -154,6 +154,7 @@ export function Dashboard() {
         {/* 당대표 누적 득표율 — 이 대시보드의 헤드라인 */}
         <Panel
           title="당대표 누적 득표율"
+          copyImage
           subtitle={`집계 지역 ${totals.regions}곳 · 총 유효표 ${num(leaderTotal)}표`}
           action={<Legend items={legendItems("leader")} />}
         >
@@ -208,6 +209,7 @@ export function Dashboard() {
         {/* 당대표 지역별 — 스몰 멀티플 */}
         <Panel
           title="당대표 지역별 득표율"
+          copyImage
           subtitle="지역마다 같은 척도(0–100%)로 비교"
           action={<Legend items={legendItems("leader")} />}
         >
@@ -256,6 +258,7 @@ export function Dashboard() {
         {/* 최고위원 */}
         <Panel
           title="최고위원 누적 득표"
+          copyImage
           subtitle={`득표순 · 선출 정수 ${SUPREME_SEATS}명 · 집계 지역 ${supremeRegions.length}곳`}
         >
           {supremeMissing.length > 0 ? (
@@ -319,6 +322,7 @@ export function Dashboard() {
         {/* 참고 — 투표 참여 현황 */}
         <Panel
           title="투표 참여 현황"
+          copyImage
           subtitle="참고 지표 · 선거인수 대비 온라인투표 참여율"
         >
           <div className="grid gap-4 sm:grid-cols-3">

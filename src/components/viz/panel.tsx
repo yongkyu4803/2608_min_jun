@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  CopyImageButton,
+  EXPORT_IGNORE_ATTR,
+} from "@/components/viz/copy-image-button";
 import { cn } from "@/lib/utils";
 
 /** 차트 한 개를 담는 카드. 축 라벨까지 포함해 높이를 고정하지 않는다. */
@@ -12,15 +16,21 @@ export function Panel({
   action,
   children,
   className,
+  copyImage,
 }: {
   title: string;
   subtitle?: string;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
+  /** 카드 전체를 PNG로 복사하는 버튼을 헤더에 붙인다 */
+  copyImage?: boolean;
 }) {
+  const ref = useRef<HTMLElement>(null);
+
   return (
     <section
+      ref={ref}
       className={cn("flex flex-col gap-4 rounded-xl p-5", className)}
       style={{
         background: "var(--viz-surface)",
@@ -41,7 +51,14 @@ export function Panel({
             </p>
           ) : null}
         </div>
-        {action}
+        <div className="flex shrink-0 items-center gap-2">
+          {action}
+          {copyImage ? (
+            <span {...{ [EXPORT_IGNORE_ATTR]: "" }}>
+              <CopyImageButton targetRef={ref} filename={title} />
+            </span>
+          ) : null}
+        </div>
       </header>
       {children}
     </section>
@@ -178,7 +195,7 @@ export function DataTable({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex justify-end">
+      <div className="flex justify-end" {...{ [EXPORT_IGNORE_ATTR]: "" }}>
         <CopyTableButton columns={columns} rows={rows} />
       </div>
       <div className="overflow-x-auto">
