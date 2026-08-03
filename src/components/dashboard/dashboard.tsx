@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AddEntryForm } from "@/components/dashboard/add-entry-form";
+import { BannerSlots } from "@/components/dashboard/banner-slots";
 import { KoreaMap, type MapDatum } from "@/components/dashboard/korea-map";
 import { VisitorCount } from "@/components/dashboard/visitor-count";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -129,6 +130,9 @@ export function Dashboard() {
             <AddEntryForm existingRegions={regions} onAdd={addEntry} />
           </div>
         </header>
+
+        {/* 배너 — 헤더와 필터 사이, 좌우 50:50 */}
+        <BannerSlots />
 
         {/* 필터 — 모든 차트를 한 줄에서 동일하게 스코프한다 */}
         <div
