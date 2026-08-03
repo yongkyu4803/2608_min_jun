@@ -3,8 +3,8 @@
 import { BANNERS, BANNER_ASPECT, type Banner } from "@/lib/banners";
 
 /**
- * 헤더와 필터 사이의 배너 영역. 두 칸을 정확히 50:50으로 나눈다.
- * 좁은 화면에서는 세로로 쌓인다.
+ * 헤더와 필터 사이의 배너 영역. 세 칸을 정확히 1/3씩 나눈다.
+ * 좁은 화면(md 미만)에서는 세로로 쌓인다 — 3등분하면 한 칸이 너무 좁아지기 때문.
  *
  * 개발 중에는 빈 칸도 자리표시자로 보여 위치를 확인할 수 있게 하고,
  * 배포본에서는 채워진 배너가 하나도 없으면 영역 자체를 그리지 않는다.
@@ -15,14 +15,14 @@ export function BannerSlots() {
   if (!hasAny && !showPlaceholders) return null;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-4 md:grid-cols-3">
       {BANNERS.map((banner, i) =>
         banner ? (
           <BannerCard key={i} banner={banner} />
         ) : showPlaceholders ? (
           <Placeholder key={i} index={i} />
         ) : (
-          // 한쪽만 채워져 있을 때 남은 칸을 비워 두어 50:50 배치를 유지한다
+          // 일부만 채워져 있을 때 남은 칸을 비워 두어 1/3 배치를 유지한다
           <div key={i} aria-hidden />
         ),
       )}
@@ -88,10 +88,10 @@ function Placeholder({ index }: { index: number }) {
         className="text-xs font-medium"
         style={{ color: "var(--viz-muted)" }}
       >
-        배너 {index + 1} (50%)
+        배너 {index + 1} (1/3)
       </span>
       <span className="text-[11px]" style={{ color: "var(--viz-muted)" }}>
-        src/lib/banners.ts 에서 설정 · 권장 비율 4:1
+        src/lib/banners.ts · 권장 3:1
       </span>
     </div>
   );

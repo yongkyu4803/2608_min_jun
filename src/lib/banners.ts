@@ -10,14 +10,18 @@ export type Banner = {
 };
 
 /**
- * 상단 배너 두 칸. 왼쪽·오른쪽 각각 50%를 차지한다.
+ * 상단 배너 세 칸. 각 칸이 정확히 1/3 폭을 차지한다.
  *
- * 채우는 법: 이미지를 public/banners/ 에 넣고 아래 배열에 항목을 추가한다.
+ * 채우는 법: 이미지를 public/banners/ 에 넣고 아래 배열의 자리를 채운다.
  *   { src: "/banners/example.png", alt: "설명", href: "https://example.com" }
  *
- * 빈 칸은 자리표시자로 표시되며, 둘 다 비어 있으면 배너 영역 자체가 렌더링되지 않는다.
- * 권장 비율은 4:1 (예: 1120×280) — 두 칸 모두 같은 높이로 맞춰진다.
+ * 빈 칸은 자리표시자로 표시되며, 셋 다 비어 있으면 배너 영역 자체가 렌더링되지 않는다.
+ * 권장 비율은 3:1 (예: 1080×360) — 세 칸 모두 같은 높이로 맞춰진다.
  */
-export const BANNERS: [Banner | null, Banner | null] = [null, null];
+export const BANNERS: [Banner | null, Banner | null, Banner | null] = [
+  null,
+  null,
+  null,
+];
 
-export const BANNER_ASPECT = "4 / 1";
+export const BANNER_ASPECT = "3 / 1";
