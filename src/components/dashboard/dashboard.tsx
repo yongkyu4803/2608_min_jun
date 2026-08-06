@@ -132,53 +132,57 @@ export function Dashboard() {
         {/* 배너 — 헤더와 필터 사이, 1/3씩 세 칸 */}
         <BannerSlots />
 
-        {/* 필터 — 모든 차트를 한 줄에서 동일하게 스코프한다 */}
+        {/* 필터 + 일정 — 화면 전체를 스코프하는 컨트롤이므로 한 카드에 묶는다 */}
         <div
-          className="flex flex-wrap items-center gap-2 rounded-xl px-4 py-3"
+          className="flex flex-col rounded-xl"
           style={{
             background: "var(--viz-surface)",
             border: "1px solid var(--viz-hairline)",
           }}
         >
-          <span className="text-xs" style={{ color: "var(--viz-muted)" }}>
-            집계 지역
-          </span>
-          {entries.map((e) => {
-            const on = !excluded.includes(e.region);
-            return (
-              <button
-                key={e.id}
-                type="button"
-                onClick={() => toggleRegion(e.region)}
-                aria-pressed={on}
-                className={cn(
-                  "rounded-full px-3 py-1 text-xs transition-colors",
-                  on ? "font-medium" : "",
-                )}
-                style={{
-                  background: on ? "var(--viz-s1)" : "transparent",
-                  color: on ? "#ffffff" : "var(--viz-text-secondary)",
-                  border: `1px solid ${on ? "transparent" : "var(--viz-hairline)"}`,
-                }}
+          <div className="flex flex-wrap items-center gap-2 px-4 py-3">
+            <span className="text-xs" style={{ color: "var(--viz-muted)" }}>
+              집계 지역
+            </span>
+            {entries.map((e) => {
+              const on = !excluded.includes(e.region);
+              return (
+                <button
+                  key={e.id}
+                  type="button"
+                  onClick={() => toggleRegion(e.region)}
+                  aria-pressed={on}
+                  className={cn(
+                    "rounded-full px-3 py-1 text-xs transition-colors",
+                    on ? "font-medium" : "",
+                  )}
+                  style={{
+                    background: on ? "var(--viz-s1)" : "transparent",
+                    color: on ? "#ffffff" : "var(--viz-text-secondary)",
+                    border: `1px solid ${on ? "transparent" : "var(--viz-hairline)"}`,
+                  }}
+                >
+                  {e.region}
+                </button>
+              );
+            })}
+            {excluded.length > 0 ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setExcluded([])}
               >
-                {e.region}
-              </button>
-            );
-          })}
-          {excluded.length > 0 ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs"
-              onClick={() => setExcluded([])}
-            >
-              전체 선택
-            </Button>
-          ) : null}
-        </div>
+                전체 선택
+              </Button>
+            ) : null}
+          </div>
 
-        {/* 경선 일정 — 두 줄 이내 요약, 상세는 모달 */}
-        <ScheduleStrip collectedRegions={regions} />
+          <div style={{ borderTop: "1px solid var(--viz-hairline)" }} />
+
+          {/* 경선 일정 — 두 줄 이내 요약, 상세는 모달 */}
+          <ScheduleStrip collectedRegions={regions} />
+        </div>
 
         {/* 당대표 누적 득표율 — 이 대시보드의 헤드라인 */}
         <Panel

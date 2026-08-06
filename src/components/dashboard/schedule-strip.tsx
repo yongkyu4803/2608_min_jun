@@ -45,13 +45,8 @@ export function ScheduleStrip({
   );
 
   return (
-    <div
-      className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-xl px-4 py-3"
-      style={{
-        background: "var(--viz-surface)",
-        border: "1px solid var(--viz-hairline)",
-      }}
-    >
+    // 카드 테두리는 부모(필터와 공유하는 카드)가 그린다
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-3">
       <span className="shrink-0 text-xs" style={{ color: "var(--viz-muted)" }}>
         경선 일정
       </span>
