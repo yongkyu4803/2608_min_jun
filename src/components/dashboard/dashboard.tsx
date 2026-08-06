@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { AddEntryForm } from "@/components/dashboard/add-entry-form";
 import { BannerSlots } from "@/components/dashboard/banner-slots";
 import { KoreaMap, type MapDatum } from "@/components/dashboard/korea-map";
+import { ScheduleStrip } from "@/components/dashboard/schedule-strip";
 import { VisitorCount } from "@/components/dashboard/visitor-count";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BarList, Legend, type BarRow } from "@/components/viz/bar-list";
@@ -175,6 +176,9 @@ export function Dashboard() {
             </Button>
           ) : null}
         </div>
+
+        {/* 경선 일정 — 두 줄 이내 요약, 상세는 모달 */}
+        <ScheduleStrip collectedRegions={regions} />
 
         {/* 당대표 누적 득표율 — 이 대시보드의 헤드라인 */}
         <Panel
