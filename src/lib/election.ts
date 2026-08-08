@@ -171,6 +171,34 @@ export const SEED_ENTRIES: RegionEntry[] = [
     },
     seeded: true,
   },
+
+  /* 제주·인천 권리당원 온라인투표 결과 보도자료 (2026.08.08.) */
+  {
+    id: "seed-jeju",
+    region: "제주",
+    group: "제주·인천",
+    date: "2026-08-08",
+    electorate: 44_195,
+    voters: 16_607,
+    votes: {
+      leader: leader(1_240, 6_625, 8_742),
+      supreme: supreme(6_080, 4_422, 1_376, 4_781, 4_680, 3_696, 5_125, 3_054),
+    },
+    seeded: true,
+  },
+  {
+    id: "seed-incheon",
+    region: "인천",
+    group: "제주·인천",
+    date: "2026-08-08",
+    electorate: 56_942,
+    voters: 30_591,
+    votes: {
+      leader: leader(3_559, 13_237, 13_795),
+      supreme: supreme(9_980, 8_071, 1_588, 9_508, 8_930, 8_200, 11_694, 3_211),
+    },
+    seeded: true,
+  },
 ];
 
 /* ------------------------------------------------------------------ */
