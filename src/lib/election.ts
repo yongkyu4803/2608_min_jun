@@ -199,6 +199,47 @@ export const SEED_ENTRIES: RegionEntry[] = [
     },
     seeded: true,
   },
+
+  /* 강원·대구·경북 권리당원 투표 결과 보도자료 (2026.08.09.) */
+  {
+    id: "seed-gangwon",
+    region: "강원",
+    group: "강원·대구·경북",
+    date: "2026-08-09",
+    electorate: 44_164,
+    voters: 19_022,
+    votes: {
+      leader: leader(1_476, 7_978, 9_568),
+      supreme: supreme(6_760, 5_034, 1_231, 5_740, 5_218, 4_472, 6_790, 2_799),
+    },
+    seeded: true,
+  },
+  {
+    id: "seed-daegu",
+    region: "대구",
+    group: "강원·대구·경북",
+    date: "2026-08-09",
+    electorate: 13_366,
+    voters: 9_625,
+    votes: {
+      leader: leader(561, 4_603, 4_461),
+      supreme: supreme(3_263, 2_520, 347, 2_894, 2_972, 2_846, 2_935, 1_473),
+    },
+    seeded: true,
+  },
+  {
+    id: "seed-gyeongbuk",
+    region: "경북",
+    group: "강원·대구·경북",
+    date: "2026-08-09",
+    electorate: 14_666,
+    voters: 10_445,
+    votes: {
+      leader: leader(723, 4_774, 4_948),
+      supreme: supreme(3_303, 2_380, 360, 2_926, 2_871, 2_629, 3_152, 3_269),
+    },
+    seeded: true,
+  },
 ];
 
 /* ------------------------------------------------------------------ */
