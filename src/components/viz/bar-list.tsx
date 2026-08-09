@@ -13,6 +13,11 @@ export type BarRow = {
   colorVar: string;
   /** 라벨 앞 작은 배지 (기호, 순위 등) */
   badge?: string;
+  /**
+   * 값 뒤 작은 배지 (예: "1위").
+   * 이름 칸이 좁은 스몰 멀티플에서 앞쪽에 붙이면 막대가 짧아지므로 뒤에 둔다.
+   */
+  valueBadge?: string;
   /** 툴팁 본문 */
   tooltip: { label: string; value: string }[];
   /** 강조 해제 (참고용 행) */
@@ -78,11 +83,25 @@ export function BarList({ rows, max, labelWidth = "5.5rem", className }: Props) 
                 }}
               />
             </div>
-            <span
-              className="whitespace-nowrap text-right text-sm tabular-nums"
-              style={{ color: "var(--viz-text-secondary)" }}
-            >
-              {row.valueLabel}
+            {/* 배지를 숫자 앞에 둔다 — 뒤에 붙이면 그 행만 숫자가 밀려 정렬이 깨진다 */}
+            <span className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+              {row.valueBadge ? (
+                <span
+                  className="shrink-0 rounded-[3px] px-1 text-[11px] leading-[18px]"
+                  style={{
+                    color: "var(--viz-muted)",
+                    border: "1px solid var(--viz-hairline)",
+                  }}
+                >
+                  {row.valueBadge}
+                </span>
+              ) : null}
+              <span
+                className="text-sm tabular-nums"
+                style={{ color: "var(--viz-text-secondary)" }}
+              >
+                {row.valueLabel}
+              </span>
             </span>
 
             <Tooltip title={row.label} items={row.tooltip} />

@@ -275,6 +275,8 @@ export function Dashboard() {
                       label: c.name,
                       value: c.share,
                       valueLabel: pct(c.share, 1),
+                      // 대구 1.47%p 처럼 근소한 지역은 막대만으로 판정이 안 된다
+                      valueBadge: c.rank === 1 ? "1위" : undefined,
                       colorVar: LEADER_COLORS[c.no - 1],
                       tooltip: [
                         { label: "득표수", value: `${num(c.votes)}표` },
