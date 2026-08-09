@@ -86,11 +86,12 @@ export function BarList({ rows, max, labelWidth = "5.5rem", className }: Props) 
             {/* 배지를 숫자 앞에 둔다 — 뒤에 붙이면 그 행만 숫자가 밀려 정렬이 깨진다 */}
             <span className="flex items-center justify-end gap-1.5 whitespace-nowrap">
               {row.valueBadge ? (
+                // 테두리 대신 채우고 잉크를 올린다 — 색을 새로 들이지 않고 대비만 높인다
                 <span
-                  className="shrink-0 rounded-[3px] px-1 text-[11px] leading-[18px]"
+                  className="shrink-0 rounded-[3px] px-1 text-[11px] leading-[18px] font-medium"
                   style={{
-                    color: "var(--viz-muted)",
-                    border: "1px solid var(--viz-hairline)",
+                    color: "var(--viz-text-primary)",
+                    background: "var(--viz-grid)",
                   }}
                 >
                   {row.valueBadge}
@@ -98,7 +99,12 @@ export function BarList({ rows, max, labelWidth = "5.5rem", className }: Props) 
               ) : null}
               <span
                 className="text-sm tabular-nums"
-                style={{ color: "var(--viz-text-secondary)" }}
+                style={{
+                  // 1위 행은 수치도 함께 진해져 행 전체가 떠오른다
+                  color: row.valueBadge
+                    ? "var(--viz-text-primary)"
+                    : "var(--viz-text-secondary)",
+                }}
               >
                 {row.valueLabel}
               </span>
