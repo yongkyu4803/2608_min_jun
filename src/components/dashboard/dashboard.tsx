@@ -255,9 +255,14 @@ export function Dashboard() {
               })}
             />
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            /* 지역마다 옅은 배경 타일 — 사이 간격이 카드 표면색으로 남아 구분선 역할을 한다 */
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
               {entriesWithRace(selected, "leader").map((e) => (
-                <div key={e.id} className="flex flex-col gap-2">
+                <div
+                  key={e.id}
+                  className="flex flex-col gap-2 rounded-lg p-3"
+                  style={{ background: "var(--viz-plane)" }}
+                >
                   <div className="flex items-baseline justify-between">
                     <span className="text-xs font-medium">{e.region}</span>
                     <span
