@@ -261,7 +261,7 @@ export function Dashboard() {
                 <div
                   key={e.id}
                   className="flex flex-col gap-2 rounded-lg p-3"
-                  style={{ background: "var(--viz-plane)" }}
+                  style={{ background: "var(--viz-tile)" }}
                 >
                   <div className="flex items-baseline justify-between">
                     <span className="text-xs font-medium">{e.region}</span>
