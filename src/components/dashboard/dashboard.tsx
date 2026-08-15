@@ -41,6 +41,11 @@ export function Dashboard() {
   const [mapMetric, setMapMetric] = useState<"leader" | "turnout">("leader");
 
   const regions = useMemo(() => entries.map((e) => e.region), [entries]);
+  /** 일정 진행도 판정용 — 묶음 발표 지역은 포함된 시·도로 펼친다 */
+  const collectedRegions = useMemo(
+    () => entries.flatMap((e) => e.mapRegions ?? [e.region]),
+    [entries],
+  );
   const selected = useMemo(
     () => entries.filter((e) => !excluded.includes(e.region)),
     [entries, excluded],
@@ -59,24 +64,28 @@ export function Dashboard() {
   const leaderTotal = leader.reduce((acc, c) => acc + c.votes, 0);
   const userEntries = entries.filter((e) => !e.seeded);
 
-  /** 지도용 — 지역마다 선두 후보와 투표율을 함께 담아 두 지표를 한 번에 처리한다 */
+  /**
+   * 지도용 — 지역마다 선두 후보와 투표율을 함께 담아 두 지표를 한 번에 처리한다.
+   * 묶여서 발표된 지역(mapRegions)은 같은 값으로 시·도별 조각을 채운다 — 값은 묶음 전체 기준이다.
+   */
   const mapData = useMemo<MapDatum[]>(
     () =>
-      entriesWithRace(selected, "leader").map((e) => {
+      entriesWithRace(selected, "leader").flatMap((e) => {
         const top = [...resultsOf([e], "leader")].sort(
           (a, b) => b.votes - a.votes,
         )[0];
         const turnout = e.electorate > 0 ? (e.voters / e.electorate) * 100 : 0;
-        return {
-          region: e.region,
+        return (e.mapRegions ?? [e.region]).map((region) => ({
+          region,
           value: mapMetric === "leader" ? top.share : turnout,
           caption: mapMetric === "leader" ? `선두 ${top.name}` : undefined,
           detail: [
+            ...(e.mapRegions ? [{ label: "발표 단위", value: e.region }] : []),
             { label: `선두 ${top.name}`, value: pct(top.share) },
             { label: "투표율", value: pct(turnout) },
             { label: "투표자수", value: `${num(e.voters)}명` },
           ],
-        };
+        }));
       }),
     [selected, mapMetric],
   );
@@ -181,7 +190,7 @@ export function Dashboard() {
           <div style={{ borderTop: "1px solid var(--viz-hairline)" }} />
 
           {/* 경선 일정 — 두 줄 이내 요약, 상세는 모달 */}
-          <ScheduleStrip collectedRegions={regions} />
+          <ScheduleStrip collectedRegions={collectedRegions} />
         </div>
 
         {/* 당대표 누적 득표율 — 이 대시보드의 헤드라인 */}

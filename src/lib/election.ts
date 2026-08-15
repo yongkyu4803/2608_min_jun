@@ -46,6 +46,11 @@ export type RegionEntry = {
   id: string;
   /** 시·도 이름 (예: 충남) */
   region: string;
+  /**
+   * 지도에서 이 레코드가 덮는 시·도 이름들.
+   * 보도자료가 여러 시·도를 묶어 발표한 경우(예: 전남광주)에만 쓴다 — 생략하면 region 하나.
+   */
+  mapRegions?: string[];
   /** 권역 (예: 충청권) */
   group: string;
   /** 발표일 (YYYY-MM-DD) */
@@ -237,6 +242,54 @@ export const SEED_ENTRIES: RegionEntry[] = [
     votes: {
       leader: leader(723, 4_774, 4_948),
       supreme: supreme(3_303, 2_380, 360, 2_926, 2_871, 2_629, 3_152, 3_269),
+    },
+    seeded: true,
+  },
+
+  /* 전남광주·전북 권리당원 투표 결과 보도자료 (2026.08.15.) */
+  {
+    // 보도자료가 전남과 광주를 하나로 묶어 발표해 분리할 수 없다.
+    id: "seed-jeonnam-gwangju",
+    region: "전남·광주",
+    mapRegions: ["전남", "광주"],
+    group: "전남광주·전북",
+    date: "2026-08-15",
+    electorate: 314_184,
+    voters: 151_756,
+    votes: {
+      leader: leader(16_874, 48_324, 86_558),
+      supreme: supreme(
+        46_298,
+        41_147,
+        14_468,
+        54_806,
+        31_475,
+        31_421,
+        60_691,
+        23_206,
+      ),
+    },
+    seeded: true,
+  },
+  {
+    id: "seed-jeonbuk",
+    region: "전북",
+    group: "전남광주·전북",
+    date: "2026-08-15",
+    electorate: 192_020,
+    voters: 90_333,
+    votes: {
+      leader: leader(6_875, 30_709, 52_749),
+      supreme: supreme(
+        25_297,
+        24_851,
+        6_326,
+        26_845,
+        22_979,
+        31_752,
+        29_037,
+        13_579,
+      ),
     },
     seeded: true,
   },
