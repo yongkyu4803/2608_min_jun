@@ -7,13 +7,21 @@ import { cn } from "@/lib/utils";
 
 export type MapDatum = {
   region: string;
-  /** 색 농도를 정하는 값 (%) */
+  /** 색 농도를 정하는 값 (%) — 순차 색을 쓸 때만 의미가 있다 */
   value: number;
+  /**
+   * 범주 색 슬롯. 지정하면 값의 농도 대신 이 색으로 칠한다.
+   * (예: "누가 1위인가"처럼 값의 크기보다 소속이 중요한 경우)
+   */
+  colorVar?: string;
   /** 상세 패널에 넣을 줄들 */
   detail: { label: string; value: string }[];
   /** 지역명 옆에 붙는 짧은 설명 (예: 선두 후보) */
   caption?: string;
 };
+
+/** 범주 색을 쓸 때 붙일 범례 항목 */
+export type MapCategory = { key: string; label: string; colorVar: string };
 
 /** 농도 4단계 — 값 범위를 4등분한다 */
 const STEPS = ["--viz-c1", "--viz-c2", "--viz-c3", "--viz-c4"];
@@ -51,9 +59,12 @@ function bucketOf(value: number, min: number, max: number) {
 export function KoreaMap({
   data,
   unit = "%",
+  categories,
 }: {
   data: MapDatum[];
   unit?: string;
+  /** 주면 범주 색 모드 — 색은 소속(누가 1위인가)을 뜻하고 농도는 쓰지 않는다 */
+  categories?: MapCategory[];
 }) {
   const [hover, setHover] = useState<string | null>(null);
 
@@ -63,10 +74,16 @@ export function KoreaMap({
   const max = values.length ? Math.max(...values) : 0;
   const ranked = [...data].sort((a, b) => b.value - a.value);
   const active = hover ? byRegion.get(hover) : null;
+  /** 범주 색이 있으면 그 색, 없으면 값 농도 */
+  const fillOf = (d?: MapDatum) =>
+    d
+      ? `var(${d.colorVar ?? STEPS[bucketOf(d.value, min, max)]})`
+      : "var(--viz-c0)";
 
   return (
-    <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-8">
-      <div className="mx-auto w-full max-w-[24rem] shrink-0">
+    // 지도 6.5 : 목록 3.5 — 지도가 주인공이고 목록은 값을 읽는 보조 축이다
+    <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[6.5fr_3.5fr] lg:items-start lg:gap-8">
+      <div className="mx-auto w-full max-w-[24rem] min-w-0 lg:max-w-none">
         <svg
           viewBox={KOREA_VIEWBOX}
           className="h-auto w-full"
@@ -75,9 +92,7 @@ export function KoreaMap({
         >
           {KOREA_PROVINCES.map((p) => {
             const d = byRegion.get(p.name);
-            const fill = d
-              ? `var(${STEPS[bucketOf(d.value, min, max)]})`
-              : "var(--viz-c0)";
+            const fill = fillOf(d);
             return (
               <path
                 key={p.name}
@@ -141,8 +156,12 @@ export function KoreaMap({
         </svg>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-4">
-        <ScaleLegend min={min} max={max} unit={unit} />
+      <div className="flex min-w-0 flex-col gap-4">
+        {categories ? (
+          <CategoryLegend items={categories} />
+        ) : (
+          <ScaleLegend min={min} max={max} unit={unit} />
+        )}
 
         {/* 값은 목록으로도 읽을 수 있어야 한다 — 호버는 보조 수단 */}
         <ul className="flex flex-col">
@@ -163,9 +182,7 @@ export function KoreaMap({
                     <span
                       aria-hidden
                       className="size-2.5 shrink-0 rounded-[3px]"
-                      style={{
-                        background: `var(${STEPS[bucketOf(d.value, min, max)]})`,
-                      }}
+                      style={{ background: fillOf(d) }}
                     />
                     <span
                       className="text-sm font-medium"
@@ -240,6 +257,31 @@ export function KoreaMap({
           지도 경계: 통계청 센서스용 행정구역경계(2013) · southkorea-maps
         </p>
       </div>
+    </div>
+  );
+}
+
+/** 범주 색상 범례 — 색이 값의 크기가 아니라 소속을 뜻한다는 것을 알린다 */
+function CategoryLegend({ items }: { items: MapCategory[] }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      {[...items, { key: "__none", label: "미개표", colorVar: "--viz-c0" }].map(
+        (item) => (
+          <div key={item.key} className="flex items-center gap-1.5">
+            <span
+              aria-hidden
+              className="size-2.5 rounded-[3px]"
+              style={{ background: `var(${item.colorVar})` }}
+            />
+            <span
+              className="text-[11px]"
+              style={{ color: "var(--viz-muted)" }}
+            >
+              {item.label}
+            </span>
+          </div>
+        ),
+      )}
     </div>
   );
 }

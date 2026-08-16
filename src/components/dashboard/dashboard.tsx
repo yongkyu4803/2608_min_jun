@@ -78,10 +78,13 @@ export function Dashboard() {
         return (e.mapRegions ?? [e.region]).map((region) => ({
           region,
           value: mapMetric === "leader" ? top.share : turnout,
-          caption: mapMetric === "leader" ? `선두 ${top.name}` : undefined,
+          // 1위 모드에서는 "누가 이겼나"가 정보다 — 득표율 농도가 아니라 후보 색으로 칠한다
+          colorVar:
+            mapMetric === "leader" ? LEADER_COLORS[top.no - 1] : undefined,
+          caption: mapMetric === "leader" ? `1위 ${top.name}` : undefined,
           detail: [
             ...(e.mapRegions ? [{ label: "발표 단위", value: e.region }] : []),
-            { label: `선두 ${top.name}`, value: pct(top.share) },
+            { label: `1위 ${top.name}`, value: pct(top.share) },
             { label: "투표율", value: pct(turnout) },
             { label: "투표자수", value: `${num(e.voters)}명` },
           ],
@@ -89,6 +92,23 @@ export function Dashboard() {
       }),
     [selected, mapMetric],
   );
+
+  /** 지도 범례 — 실제로 어딘가에서 1위를 한 후보만, 기호순으로 */
+  const mapCategories = useMemo(() => {
+    const leaders = new Set(
+      entriesWithRace(selected, "leader").map(
+        (e) =>
+          [...resultsOf([e], "leader")].sort((a, b) => b.votes - a.votes)[0].no,
+      ),
+    );
+    return CANDIDATES.leader
+      .filter((c) => leaders.has(c.no))
+      .map((c) => ({
+        key: String(c.no),
+        label: `${c.name} 1위`,
+        colorVar: LEADER_COLORS[c.no - 1],
+      }));
+  }, [selected]);
 
   function toggleRegion(region: string) {
     setExcluded((prev) =>
@@ -309,7 +329,7 @@ export function Dashboard() {
           title="지도로 보기"
           subtitle={
             mapMetric === "leader"
-              ? "지역별 선두 후보의 득표율 — 진할수록 높음"
+              ? "지역별 1위 후보 — 색이 후보를 뜻한다"
               : "지역별 투표율 — 진할수록 높음"
           }
           copyImage
@@ -320,7 +340,7 @@ export function Dashboard() {
             >
               {(
                 [
-                  ["leader", "선두 득표율"],
+                  ["leader", "1위 후보"],
                   ["turnout", "투표율"],
                 ] as const
               ).map(([key, label]) => (
@@ -347,16 +367,20 @@ export function Dashboard() {
         >
           {asTable ? (
             <DataTable
-              columns={["지역", "선두 후보", "선두 득표율", "투표율"]}
+              columns={["지역", "1위 후보", "1위 득표율", "투표율"]}
+              // 묶음 발표 지역은 detail 앞에 "발표 단위"가 하나 더 붙는다 — 위치가 아니라 라벨로 찾는다
               rows={mapData.map((d) => [
                 d.region,
                 d.caption ?? "—",
-                d.detail[0]?.value ?? "—",
-                d.detail[1]?.value ?? "—",
+                d.detail.find((r) => r.label.startsWith("1위"))?.value ?? "—",
+                d.detail.find((r) => r.label === "투표율")?.value ?? "—",
               ])}
             />
           ) : (
-            <KoreaMap data={mapData} />
+            <KoreaMap
+              data={mapData}
+              categories={mapMetric === "leader" ? mapCategories : undefined}
+            />
           )}
         </Panel>
 
