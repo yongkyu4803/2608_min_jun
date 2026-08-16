@@ -293,6 +293,52 @@ export const SEED_ENTRIES: RegionEntry[] = [
     },
     seeded: true,
   },
+
+  /* 경기·서울 권리당원 투표 결과 보도자료 (2026.08.16.) */
+  {
+    id: "seed-gyeonggi",
+    region: "경기",
+    group: "경기·서울",
+    date: "2026-08-16",
+    electorate: 331_876,
+    voters: 180_804,
+    votes: {
+      leader: leader(12_530, 83_832, 84_442),
+      supreme: supreme(
+        59_550,
+        52_690,
+        8_310,
+        53_100,
+        54_477,
+        57_304,
+        55_296,
+        20_881,
+      ),
+    },
+    seeded: true,
+  },
+  {
+    id: "seed-seoul",
+    region: "서울",
+    group: "경기·서울",
+    date: "2026-08-16",
+    electorate: 251_762,
+    voters: 136_889,
+    votes: {
+      leader: leader(9_880, 63_206, 63_803),
+      supreme: supreme(
+        44_133,
+        37_775,
+        9_563,
+        39_167,
+        42_595,
+        44_144,
+        40_250,
+        16_151,
+      ),
+    },
+    seeded: true,
+  },
 ];
 
 /* ------------------------------------------------------------------ */
