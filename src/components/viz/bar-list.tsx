@@ -42,15 +42,19 @@ export function BarList({ rows, max, labelWidth = "5.5rem", className }: Props) 
   const scale = max ?? Math.max(...rows.map((r) => r.value), 1);
 
   return (
-    <div className={cn("flex flex-col gap-2.5", className)}>
+    // 컬럼 트랙을 목록 전체가 공유한다 — 행마다 grid를 따로 두면 값 컬럼(auto) 폭이
+    // 배지·자릿수에 따라 달라져 막대 트랙 길이가 행마다 어긋난다(1위가 더 짧아 보이는 원인)
+    <div
+      className={cn("grid gap-x-3 gap-y-2.5", className)}
+      style={{ gridTemplateColumns: `${labelWidth} minmax(0,1fr) auto` }}
+    >
       {rows.map((row) => {
         const width = scale > 0 ? Math.max((row.value / scale) * 100, 1.5) : 0;
         return (
           <div
             key={row.key}
             tabIndex={0}
-            className="group relative grid items-center gap-3 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
-            style={{ gridTemplateColumns: `${labelWidth} minmax(0,1fr) auto` }}
+            className="group relative col-span-3 grid grid-cols-subgrid items-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
           >
             <div className="flex min-w-0 items-center gap-1.5">
               {row.badge ? (
