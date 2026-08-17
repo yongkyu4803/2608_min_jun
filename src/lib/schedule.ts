@@ -80,6 +80,9 @@ export const CONVENTION = {
   venue: "대전컨벤션센터 제2전시장",
   /** 최종 결과 산정 방식 */
   formula: "권리당원·대의원 70% + 국민여론조사 30%",
+  /** formula 를 가중합산에 쓰는 실제 계수 — 문구가 바뀌면 이 값도 같이 맞춰야 한다 */
+  partyWeight: 0.7,
+  pollWeight: 0.3,
   pollPeriod: ["2026-08-14", "2026-08-15"] as [string, string],
 };
 

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { AddEntryForm } from "@/components/dashboard/add-entry-form";
 import { BannerSlots } from "@/components/dashboard/banner-slots";
+import { FinalResultForm } from "@/components/dashboard/final-result-form";
 import { KoreaMap, type MapDatum } from "@/components/dashboard/korea-map";
 import { ScheduleStrip } from "@/components/dashboard/schedule-strip";
 import { VisitorCount } from "@/components/dashboard/visitor-count";
@@ -17,15 +18,19 @@ import {
   RACE_LABEL,
   SUPREME_SEATS,
   entriesWithRace,
+  finalResultsOf,
   num,
   pct,
   regionsMissingRace,
   resultsOf,
   totalsOf,
   turnoutByRegion,
+  type FinalCandidateResult,
   type Race,
 } from "@/lib/election";
+import { CONVENTION, shortDate } from "@/lib/schedule";
 import { useElectionStore } from "@/lib/use-election-store";
+import { useFinalResultStore } from "@/lib/use-final-result-store";
 import { cn } from "@/lib/utils";
 
 /**
@@ -36,6 +41,11 @@ const LEADER_COLORS = ["--viz-o1", "--viz-o2", "--viz-o3"];
 
 export function Dashboard() {
   const { entries, addEntry, removeEntry, reset } = useElectionStore();
+  const {
+    finalResult,
+    setRace: setFinalRace,
+    clearRace: clearFinalRace,
+  } = useFinalResultStore();
   const [excluded, setExcluded] = useState<string[]>([]);
   const [asTable, setAsTable] = useState(false);
   const [mapMetric, setMapMetric] = useState<"leader" | "turnout">("leader");
@@ -63,6 +73,13 @@ export function Dashboard() {
   const runnerUp = leaderRanked[1];
   const leaderTotal = leader.reduce((acc, c) => acc + c.votes, 0);
   const userEntries = entries.filter((e) => !e.seeded);
+
+  const finalLeader = finalResult.leader
+    ? finalResultsOf(finalResult.leader, "leader")
+    : null;
+  const finalSupreme = finalResult.supreme
+    ? finalResultsOf(finalResult.supreme, "supreme")
+    : null;
 
   /**
    * 지도용 — 지역마다 선두 후보와 투표율을 함께 담아 두 지표를 한 번에 처리한다.
@@ -212,6 +229,39 @@ export function Dashboard() {
           {/* 경선 일정 — 두 줄 이내 요약, 상세는 모달 */}
           <ScheduleStrip collectedRegions={collectedRegions} />
         </div>
+
+        {/* 전당대회 최종 결과 — 권리당원·대의원 누적과 다른 산정식(가중합산)이라 별도 패널로 분리 */}
+        <Panel
+          title="전당대회 최종 결과"
+          copyImage
+          subtitle={`${CONVENTION.formula} · ${shortDate(CONVENTION.date)} · ${CONVENTION.venue}`}
+          action={<FinalResultForm onSubmitRace={setFinalRace} />}
+        >
+          {!finalLeader && !finalSupreme ? (
+            <p className="text-sm" style={{ color: "var(--viz-text-secondary)" }}>
+              아직 발표되지 않았습니다. 발표되면 &lsquo;최종 결과 입력&rsquo;으로
+              반영하세요. 위의 다른 패널은 권리당원 온라인투표 누적일 뿐, 최종
+              결과와는 다릅니다.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-6">
+              {finalLeader ? (
+                <FinalResultBlock
+                  race="leader"
+                  results={finalLeader}
+                  onClear={() => clearFinalRace("leader")}
+                />
+              ) : null}
+              {finalSupreme ? (
+                <FinalResultBlock
+                  race="supreme"
+                  results={finalSupreme}
+                  onClear={() => clearFinalRace("supreme")}
+                />
+              ) : null}
+            </div>
+          )}
+        </Panel>
 
         {/* 당대표 누적 득표율 — 이 대시보드의 헤드라인 */}
         <Panel
@@ -593,6 +643,70 @@ export function Dashboard() {
           </div>
         </footer>
       </div>
+    </div>
+  );
+}
+
+function FinalResultBlock({
+  race,
+  results,
+  onClear,
+}: {
+  race: Race;
+  results: FinalCandidateResult[];
+  onClear: () => void;
+}) {
+  const ranked = [...results].sort((a, b) => a.rank - b.rank);
+  const winner = ranked[0];
+  const hasPoll = results.some((r) => r.poll !== null);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-baseline justify-between">
+        <h3 className="text-sm font-semibold">{RACE_LABEL[race]} 최종 순위</h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 text-xs"
+          onClick={onClear}
+        >
+          지우기
+        </Button>
+      </div>
+      {winner ? (
+        <p className="text-sm" style={{ color: "var(--viz-text-secondary)" }}>
+          1위{" "}
+          <span
+            className="font-semibold"
+            style={{ color: "var(--viz-text-primary)" }}
+          >
+            {winner.name}
+          </span>{" "}
+          {pct(winner.combined)}
+        </p>
+      ) : null}
+      <BarList
+        max={100}
+        labelWidth="6rem"
+        rows={ranked.map<BarRow>((c) => ({
+          key: `final-${race}-${c.no}`,
+          label: c.name,
+          badge: `${c.rank}위`,
+          value: c.combined,
+          valueLabel: pct(c.combined, 2),
+          colorVar: race === "leader" ? LEADER_COLORS[c.no - 1] : "--viz-s1",
+          tooltip: hasPoll
+            ? [
+                { label: "권리당원·대의원", value: pct(c.party) },
+                {
+                  label: "국민여론조사",
+                  value: c.poll !== null ? pct(c.poll) : "—",
+                },
+                { label: "합산", value: pct(c.combined) },
+              ]
+            : [{ label: "권리당원·대의원", value: pct(c.party) }],
+        }))}
+      />
     </div>
   );
 }
