@@ -1,3 +1,5 @@
+import { CONVENTION } from "./schedule";
+
 export type Race = "leader" | "supreme";
 
 export type Candidate = {
@@ -415,6 +417,46 @@ export function turnoutByRegion(entries: RegionEntry[]) {
 
 function sum(xs: number[]) {
   return xs.reduce((a, b) => a + b, 0);
+}
+
+/* ------------------------------------------------------------------ */
+/* 전당대회 최종 결과 (권리당원·대의원 + 국민여론조사 가중합산)          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * 후보 기호 → 최종 득표율(%).
+ * poll 은 해당 경선에 국민여론조사가 없으면(예: 최고위원) null — party 그대로가 최종 순위가 된다.
+ */
+export type FinalShares = Record<number, { party: number; poll: number | null }>;
+
+export type FinalCandidateResult = Candidate & {
+  /** 권리당원·대의원 최종 득표율 (%) */
+  party: number;
+  /** 국민여론조사 득표율 (%) — 없으면 null */
+  poll: number | null;
+  /** CONVENTION 가중치로 합산한 최종 득표율 (%). poll 이 없으면 party 와 같다 */
+  combined: number;
+  rank: number;
+};
+
+/** 표수 누적(resultsOf)과 달리, 이미 발표된 득표율(%) 두 개를 가중합산만 한다 — 재계산할 원표가 없다. */
+export function finalResultsOf(
+  shares: FinalShares,
+  race: Race,
+): FinalCandidateResult[] {
+  const list = CANDIDATES[race].map((c) => {
+    const s = shares[c.no] ?? { party: 0, poll: null };
+    const combined =
+      s.poll === null
+        ? s.party
+        : s.party * CONVENTION.partyWeight + s.poll * CONVENTION.pollWeight;
+    return { ...c, party: s.party, poll: s.poll, combined };
+  });
+  const ordered = [...list].sort((a, b) => b.combined - a.combined);
+  return list.map((v) => ({
+    ...v,
+    rank: ordered.findIndex((o) => o.no === v.no) + 1,
+  }));
 }
 
 /* ------------------------------------------------------------------ */

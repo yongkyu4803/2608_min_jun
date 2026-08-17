@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +23,7 @@ import {
   type Race,
   type RegionEntry,
 } from "@/lib/election";
+import { useAdminUnlock } from "@/lib/use-admin-unlock";
 
 type Draft = {
   region: string;
@@ -55,14 +56,6 @@ const toNumber = (v: string) => {
   return Number.isFinite(n) ? n : NaN;
 };
 
-/**
- * 잠금 해제 비밀번호. .env.local 의 NEXT_PUBLIC_ADMIN_PASSWORD 에서 읽는다.
- * NEXT_PUBLIC_ 값은 브라우저 번들에 그대로 들어가므로 실제 인증이 아니라
- * '실수로 누르는 것'을 막는 장치다. 진짜 접근 제어가 필요하면 서버 라우트에서 검증해야 한다.
- */
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? "";
-const UNLOCK_KEY = "chungcheong-primary:unlocked";
-
 export function AddEntryForm({
   existingRegions,
   onAdd,
@@ -72,27 +65,11 @@ export function AddEntryForm({
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
-  const [unlocked, setUnlocked] = useState(false);
+  const { unlocked, tryUnlock } = useAdminUnlock();
   const [password, setPassword] = useState("");
 
-  // 한 번 열면 탭이 닫힐 때까지 유지 (새 탭/새 세션에서는 다시 물어본다)
-  useEffect(() => {
-    setUnlocked(window.sessionStorage.getItem(UNLOCK_KEY) === "1");
-  }, []);
-
   function unlock() {
-    if (!ADMIN_PASSWORD) {
-      return toast.error(
-        "잠금 해제 비밀번호가 설정되지 않았습니다. .env.local 의 NEXT_PUBLIC_ADMIN_PASSWORD 를 확인해 주세요.",
-      );
-    }
-    if (password !== ADMIN_PASSWORD) {
-      setPassword("");
-      return toast.error("비밀번호가 올바르지 않습니다.");
-    }
-    window.sessionStorage.setItem(UNLOCK_KEY, "1");
-    setUnlocked(true);
-    setPassword("");
+    if (tryUnlock(password)) setPassword("");
   }
 
   function handleOpenChange(next: boolean) {
