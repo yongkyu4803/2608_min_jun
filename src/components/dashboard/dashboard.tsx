@@ -776,7 +776,20 @@ function FinalResultBlock({
         )}
       </div>
 
-      <WinnerBanner race={race} elected={elected} />
+      {/* 당선자가 하나뿐인 경선만 배너로 세운다 — 여럿이면 서로 동급이라 한 명만 키울 수 없다 */}
+      {elected.length === 1 ? (
+        <WinnerBanner race={race} winner={elected[0]} />
+      ) : elected.length > 1 ? (
+        <p className="text-sm" style={{ color: "var(--viz-text-secondary)" }}>
+          당선{" "}
+          <span
+            className="font-semibold"
+            style={{ color: "var(--viz-text-primary)" }}
+          >
+            {elected.map((c) => c.name).join(" · ")}
+          </span>
+        </p>
+      ) : null}
 
       <p className="text-sm" style={{ color: "var(--viz-text-secondary)" }}>
         {FINAL_GAP_NOTE[race]}
@@ -823,92 +836,52 @@ function FinalResultBlock({
 }
 
 /**
- * 당선자 배너 — 이 대시보드의 결론이라 막대 안에 묻어 두지 않고 따로 세운다.
- * 1위는 이름과 득표율을 크게, 나머지 당선자는 칩으로 이어 붙인다
- * (최고위원은 5명이 모두 당선이지만 1위를 먼저 읽히게 한다).
+ * 단독 당선자 배너 — 이 대시보드의 결론이라 막대 안에 묻어 두지 않고 따로 세운다.
+ * 최고위원처럼 당선자가 여럿인 경선은 서로 동급이라 쓰지 않는다.
  */
 function WinnerBanner({
   race,
-  elected,
+  winner,
 }: {
   race: Race;
-  elected: FinalCandidateResult[];
+  winner: FinalCandidateResult;
 }) {
-  if (elected.length === 0) return null;
-  const [top, ...rest] = elected;
-
   return (
     <div
-      className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 rounded-xl px-5 py-4"
+      className="flex flex-col gap-2 rounded-xl px-5 py-4"
       style={{
         background: "var(--viz-tile)",
         border: "1px solid var(--viz-hairline)",
       }}
     >
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <span
-            className="rounded-[4px] px-2 py-0.5 text-xs font-semibold"
-            style={{ background: "var(--viz-s1)", color: "#ffffff" }}
-          >
-            당선
-          </span>
-          <span
-            className="text-sm"
-            style={{ color: "var(--viz-text-secondary)" }}
-          >
-            {RACE_LABEL[race]}
-            {elected.length > 1 ? ` 1위 · 총 ${elected.length}명` : ""}
-          </span>
-        </div>
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span
-            className="text-4xl font-semibold leading-none tracking-tight sm:text-5xl"
-            style={{ color: "var(--viz-text-primary)" }}
-          >
-            {top.name}
-          </span>
-          <span
-            className="text-3xl font-semibold leading-none tabular-nums sm:text-4xl"
-            style={{ color: "var(--viz-s1)" }}
-          >
-            {pct(top.combined)}
-          </span>
-        </div>
+      <div className="flex items-center gap-2">
+        <span
+          className="rounded-[4px] px-2 py-0.5 text-xs font-semibold"
+          style={{ background: "var(--viz-s1)", color: "#ffffff" }}
+        >
+          당선
+        </span>
+        <span
+          className="text-sm"
+          style={{ color: "var(--viz-text-secondary)" }}
+        >
+          {RACE_LABEL[race]}
+        </span>
       </div>
-
-      {rest.length > 0 ? (
-        <div className="flex flex-col gap-1.5">
-          <span className="text-xs" style={{ color: "var(--viz-muted)" }}>
-            함께 당선
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            {rest.map((c) => (
-              <span
-                key={c.no}
-                className="rounded-full px-3 py-1 text-sm"
-                style={{
-                  background: "var(--viz-surface)",
-                  border: "1px solid var(--viz-hairline)",
-                }}
-              >
-                <span
-                  className="font-medium"
-                  style={{ color: "var(--viz-text-primary)" }}
-                >
-                  {c.name}
-                </span>{" "}
-                <span
-                  className="tabular-nums"
-                  style={{ color: "var(--viz-text-secondary)" }}
-                >
-                  {pct(c.combined)}
-                </span>
-              </span>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span
+          className="text-4xl font-semibold leading-none tracking-tight sm:text-5xl"
+          style={{ color: "var(--viz-text-primary)" }}
+        >
+          {winner.name}
+        </span>
+        <span
+          className="text-3xl font-semibold leading-none tabular-nums sm:text-4xl"
+          style={{ color: "var(--viz-s1)" }}
+        >
+          {pct(winner.combined)}
+        </span>
+      </div>
     </div>
   );
 }
