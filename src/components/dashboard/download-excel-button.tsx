@@ -55,8 +55,16 @@ export function DownloadExcelButton({
   }
 
   return (
-    <Button variant="outline" size="sm" onClick={download} disabled={busy}>
-      {busy ? "만드는 중…" : "엑셀 받기"}
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-7 text-xs"
+      onClick={download}
+      disabled={busy}
+      // 패널 안에 있지만 이 패널만이 아니라 대시보드 전체를 받는다 — 라벨과 툴팁으로 범위를 밝힌다
+      title="지역별 원표·지역 외 선거인단·최종 결과를 5개 시트 엑셀로 내려받습니다"
+    >
+      {busy ? "만드는 중" : "전체 엑셀 받기"}
     </Button>
   );
 }

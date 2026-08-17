@@ -14,6 +14,7 @@ import {
 import { VisitorCount } from "@/components/dashboard/visitor-count";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BarList, Legend, type BarRow } from "@/components/viz/bar-list";
+import { EXPORT_IGNORE_ATTR } from "@/components/viz/copy-image-button";
 import { DataTable, HeroFigure, Panel, StatTile } from "@/components/viz/panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -188,10 +189,6 @@ export function Dashboard() {
             >
               {asTable ? "차트로 보기" : "표로 보기"}
             </Button>
-            <DownloadExcelButton
-              entries={entries}
-              finalShares={{ leader: leaderShares, supreme: supremeShares }}
-            />
             <ThemeToggle />
             <AddEntryForm existingRegions={regions} onAdd={addEntry} />
           </div>
@@ -258,7 +255,19 @@ export function Dashboard() {
           size="hero"
           copyImage
           subtitle={`${CONVENTION.formula} · ${shortDate(CONVENTION.date)} · ${CONVENTION.venue}`}
-          action={<FinalResultForm onSubmitRace={setFinalRace} />}
+          action={
+            // 조작 버튼은 캡처에서 뺀다 — 이미지로 복사해 공유할 때 눌리지도 않는 버튼이 찍힌다
+            <span
+              className="flex items-center gap-2"
+              {...{ [EXPORT_IGNORE_ATTR]: "" }}
+            >
+              <FinalResultForm onSubmitRace={setFinalRace} />
+              <DownloadExcelButton
+                entries={entries}
+                finalShares={{ leader: leaderShares, supreme: supremeShares }}
+              />
+            </span>
+          }
         >
           {!finalLeader && !finalSupreme ? (
             <p className="text-sm" style={{ color: "var(--viz-text-secondary)" }}>
