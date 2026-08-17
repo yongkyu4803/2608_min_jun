@@ -17,6 +17,7 @@ export function Panel({
   children,
   className,
   copyImage,
+  size = "default",
 }: {
   title: string;
   subtitle?: string;
@@ -25,28 +26,46 @@ export function Panel({
   className?: string;
   /** 카드 전체를 PNG로 복사하는 버튼을 헤더에 붙인다 */
   copyImage?: boolean;
+  /**
+   * hero 는 결론에 해당하는 카드 하나에만 쓴다 —
+   * 모든 카드를 크게 만들면 위계가 사라져 무엇이 결론인지 알 수 없다.
+   */
+  size?: "default" | "hero";
 }) {
   const ref = useRef<HTMLElement>(null);
+  const hero = size === "hero";
 
   return (
     <section
       ref={ref}
-      className={cn("flex flex-col gap-4 rounded-xl p-5", className)}
+      className={cn(
+        "flex flex-col rounded-xl",
+        hero ? "gap-5 p-6" : "gap-4 p-5",
+        className,
+      )}
       style={{
         background: "var(--viz-surface)",
-        border: "1px solid var(--viz-hairline)",
+        border: hero
+          ? "1px solid var(--viz-baseline)"
+          : "1px solid var(--viz-hairline)",
       }}
     >
       <header className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-0.5">
           <h2
-            className="text-sm font-semibold"
+            className={cn(
+              "font-semibold",
+              hero ? "text-lg tracking-tight sm:text-xl" : "text-sm",
+            )}
             style={{ color: "var(--viz-text-primary)" }}
           >
             {title}
           </h2>
           {subtitle ? (
-            <p className="text-xs" style={{ color: "var(--viz-muted)" }}>
+            <p
+              className={hero ? "text-sm" : "text-xs"}
+              style={{ color: "var(--viz-muted)" }}
+            >
               {subtitle}
             </p>
           ) : null}

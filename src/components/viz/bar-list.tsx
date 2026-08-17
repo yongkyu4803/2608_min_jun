@@ -24,12 +24,37 @@ export type BarRow = {
   dim?: boolean;
 };
 
+/**
+ * 크기 단계.
+ * lg 는 결론에 해당하는 차트(전당대회 최종 결과)에만 쓴다 —
+ * 화면 어디서나 크게 쓰면 위계가 사라져 무엇이 결론인지 알 수 없다.
+ */
+export type BarSize = "default" | "lg";
+
+const SIZES = {
+  default: {
+    row: "gap-y-2.5",
+    bar: "h-6",
+    label: "text-sm",
+    value: "text-sm",
+    badge: "text-[11px] leading-[18px] px-1",
+  },
+  lg: {
+    row: "gap-y-3",
+    bar: "h-9",
+    label: "text-base",
+    value: "text-lg",
+    badge: "text-xs leading-[20px] px-1.5",
+  },
+} as const;
+
 type Props = {
   rows: BarRow[];
   /** 막대 길이의 기준값. 생략하면 행 중 최댓값 */
   max?: number;
   labelWidth?: string;
   className?: string;
+  size?: BarSize;
 };
 
 /**
@@ -38,14 +63,21 @@ type Props = {
  * - 값은 막대 끝에 직접 라벨 (텍스트는 항상 ink 토큰, 계열색을 입히지 않는다)
  * - 행 전체가 hover/focus 대상 → 툴팁, 키보드로도 동일하게 열림
  */
-export function BarList({ rows, max, labelWidth = "5.5rem", className }: Props) {
+export function BarList({
+  rows,
+  max,
+  labelWidth = "5.5rem",
+  className,
+  size = "default",
+}: Props) {
   const scale = max ?? Math.max(...rows.map((r) => r.value), 1);
+  const s = SIZES[size];
 
   return (
     // 컬럼 트랙을 목록 전체가 공유한다 — 행마다 grid를 따로 두면 값 컬럼(auto) 폭이
     // 배지·자릿수에 따라 달라져 막대 트랙 길이가 행마다 어긋난다(1위가 더 짧아 보이는 원인)
     <div
-      className={cn("grid gap-x-3 gap-y-2.5", className)}
+      className={cn("grid gap-x-3", s.row, className)}
       style={{ gridTemplateColumns: `${labelWidth} minmax(0,1fr) auto` }}
     >
       {rows.map((row) => {
@@ -59,7 +91,10 @@ export function BarList({ rows, max, labelWidth = "5.5rem", className }: Props) 
             <div className="flex min-w-0 items-center gap-1.5">
               {row.badge ? (
                 <span
-                  className="shrink-0 rounded-[3px] px-1 text-[11px] leading-[18px] tabular-nums"
+                  className={cn(
+                    "shrink-0 rounded-[3px] tabular-nums",
+                    s.badge,
+                  )}
                   style={{
                     color: "var(--viz-muted)",
                     border: "1px solid var(--viz-hairline)",
@@ -69,7 +104,7 @@ export function BarList({ rows, max, labelWidth = "5.5rem", className }: Props) 
                 </span>
               ) : null}
               <span
-                className="truncate text-sm"
+                className={cn("truncate", s.label)}
                 style={{ color: "var(--viz-text-primary)" }}
               >
                 {row.label}
@@ -79,7 +114,10 @@ export function BarList({ rows, max, labelWidth = "5.5rem", className }: Props) 
             {/* 막대 트랙 — 값 라벨은 별도 컬럼이라 막대가 라벨을 밀어내지 않는다 */}
             <div className="min-w-0">
               <div
-                className="h-6 rounded-r-[4px] transition-[width] duration-500 ease-out"
+                className={cn(
+                  "rounded-r-[4px] transition-[width] duration-500 ease-out",
+                  s.bar,
+                )}
                 style={{
                   width: `${width}%`,
                   background: `var(${row.colorVar})`,
@@ -92,7 +130,7 @@ export function BarList({ rows, max, labelWidth = "5.5rem", className }: Props) 
               {row.valueBadge ? (
                 // 테두리 대신 채우고 잉크를 올린다 — 색을 새로 들이지 않고 대비만 높인다
                 <span
-                  className="shrink-0 rounded-[3px] px-1 text-[11px] leading-[18px] font-medium"
+                  className={cn("shrink-0 rounded-[3px] font-medium", s.badge)}
                   style={{
                     color: "var(--viz-text-primary)",
                     background: "var(--viz-grid)",
@@ -102,7 +140,7 @@ export function BarList({ rows, max, labelWidth = "5.5rem", className }: Props) 
                 </span>
               ) : null}
               <span
-                className="text-sm tabular-nums"
+                className={cn("tabular-nums", s.value)}
                 style={{
                   // 1위 행은 수치도 함께 진해져 행 전체가 떠오른다
                   color: row.valueBadge
