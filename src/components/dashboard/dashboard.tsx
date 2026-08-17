@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { AddEntryForm } from "@/components/dashboard/add-entry-form";
 import { BannerSlots } from "@/components/dashboard/banner-slots";
 import { DownloadExcelButton } from "@/components/dashboard/download-excel-button";
-import { FinalResultForm } from "@/components/dashboard/final-result-form";
 import { KoreaMap, type MapDatum } from "@/components/dashboard/korea-map";
 import { ScheduleStrip } from "@/components/dashboard/schedule-strip";
 import {
@@ -14,7 +13,6 @@ import {
 import { VisitorCount } from "@/components/dashboard/visitor-count";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BarList, Legend, type BarRow } from "@/components/viz/bar-list";
-import { EXPORT_IGNORE_ATTR } from "@/components/viz/copy-image-button";
 import { DataTable, HeroFigure, Panel, StatTile } from "@/components/viz/panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,11 +48,9 @@ const LEADER_COLORS = ["--viz-o1", "--viz-o2", "--viz-o3"];
 
 export function Dashboard() {
   const { entries, addEntry, removeEntry, reset } = useElectionStore();
-  const {
-    finalResult,
-    setRace: setFinalRace,
-    clearRace: clearFinalRace,
-  } = useFinalResultStore();
+  // 최종 결과는 보도자료 값으로 확정됐다. 직접 입력 폼은 없앴지만,
+  // 예전에 입력해 둔 값이 남아 있을 수 있어 되돌리는 길은 남겨 둔다.
+  const { finalResult, clearRace: clearFinalRace } = useFinalResultStore();
   const [excluded, setExcluded] = useState<string[]>([]);
   const [asTable, setAsTable] = useState(false);
   const [mapMetric, setMapMetric] = useState<"leader" | "turnout">("leader");
@@ -255,18 +251,11 @@ export function Dashboard() {
           size="hero"
           copyImage
           subtitle={`${CONVENTION.formula} · ${shortDate(CONVENTION.date)} · ${CONVENTION.venue}`}
-          action={
-            // 조작 버튼은 캡처에서 뺀다 — 이미지로 복사해 공유할 때 눌리지도 않는 버튼이 찍힌다
-            <span
-              className="flex items-center gap-2"
-              {...{ [EXPORT_IGNORE_ATTR]: "" }}
-            >
-              <FinalResultForm onSubmitRace={setFinalRace} />
-              <DownloadExcelButton
-                entries={entries}
-                finalShares={{ leader: leaderShares, supreme: supremeShares }}
-              />
-            </span>
+          titleAction={
+            <DownloadExcelButton
+              entries={entries}
+              finalShares={{ leader: leaderShares, supreme: supremeShares }}
+            />
           }
         >
           {!finalLeader && !finalSupreme ? (

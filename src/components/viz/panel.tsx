@@ -14,6 +14,7 @@ export function Panel({
   title,
   subtitle,
   action,
+  titleAction,
   children,
   className,
   copyImage,
@@ -21,7 +22,10 @@ export function Panel({
 }: {
   title: string;
   subtitle?: string;
+  /** 헤더 오른쪽. 범례처럼 캡처에 남아야 하는 것도 오므로 자동 제외하지 않는다 */
   action?: ReactNode;
+  /** 제목 바로 옆 버튼. 조작 전용이라 캡처에서 자동 제외된다 */
+  titleAction?: ReactNode;
   children: ReactNode;
   className?: string;
   /** 카드 전체를 PNG로 복사하는 버튼을 헤더에 붙인다 */
@@ -52,15 +56,21 @@ export function Panel({
     >
       <header className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-0.5">
-          <h2
-            className={cn(
-              "font-semibold",
-              hero ? "text-lg tracking-tight sm:text-xl" : "text-sm",
-            )}
-            style={{ color: "var(--viz-text-primary)" }}
-          >
-            {title}
-          </h2>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h2
+              className={cn(
+                "font-semibold",
+                hero ? "text-lg tracking-tight sm:text-xl" : "text-sm",
+              )}
+              style={{ color: "var(--viz-text-primary)" }}
+            >
+              {title}
+            </h2>
+            {/* 제목 옆은 조작 버튼 자리다 — action 과 달리 캡처에서 자동으로 뺀다 */}
+            {titleAction ? (
+              <span {...{ [EXPORT_IGNORE_ATTR]: "" }}>{titleAction}</span>
+            ) : null}
+          </div>
           {subtitle ? (
             <p
               className={hero ? "text-sm" : "text-xs"}
