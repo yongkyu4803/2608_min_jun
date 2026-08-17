@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { AddEntryForm } from "@/components/dashboard/add-entry-form";
 import { BannerSlots } from "@/components/dashboard/banner-slots";
+import { DownloadExcelButton } from "@/components/dashboard/download-excel-button";
 import { FinalResultForm } from "@/components/dashboard/final-result-form";
 import { KoreaMap, type MapDatum } from "@/components/dashboard/korea-map";
 import { ScheduleStrip } from "@/components/dashboard/schedule-strip";
@@ -187,6 +188,10 @@ export function Dashboard() {
             >
               {asTable ? "차트로 보기" : "표로 보기"}
             </Button>
+            <DownloadExcelButton
+              entries={entries}
+              finalShares={{ leader: leaderShares, supreme: supremeShares }}
+            />
             <ThemeToggle />
             <AddEntryForm existingRegions={regions} onAdd={addEntry} />
           </div>
