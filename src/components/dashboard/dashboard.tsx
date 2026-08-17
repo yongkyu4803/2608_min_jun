@@ -19,7 +19,10 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   CANDIDATES,
+  FINAL_ELECTORATE,
+  FINAL_GAP_NOTE,
   RACE_LABEL,
+  SEED_FINAL_SHARES,
   SUPREME_SEATS,
   entriesWithRace,
   finalResultsOf,
@@ -78,12 +81,22 @@ export function Dashboard() {
   const leaderTotal = leader.reduce((acc, c) => acc + c.votes, 0);
   const userEntries = entries.filter((e) => !e.seeded);
 
-  const finalLeader = finalResult.leader
-    ? finalResultsOf(finalResult.leader, "leader")
+  /**
+   * 보도자료 최종 결과가 기본값이고, 직접 입력한 값이 있으면 그것이 이긴다 —
+   * 지역 누적(SEED_ENTRIES + 사용자 입력)과 같은 규칙이다. '지우기'는 보도자료 값으로 되돌린다.
+   */
+  const leaderShares = finalResult.leader ?? SEED_FINAL_SHARES.leader;
+  const supremeShares = finalResult.supreme ?? SEED_FINAL_SHARES.supreme;
+  const finalLeader = leaderShares
+    ? finalResultsOf(leaderShares, "leader")
     : null;
-  const finalSupreme = finalResult.supreme
-    ? finalResultsOf(finalResult.supreme, "supreme")
+  const finalSupreme = supremeShares
+    ? finalResultsOf(supremeShares, "supreme")
     : null;
+  const finalTurnout =
+    FINAL_ELECTORATE.total.electorate > 0
+      ? (FINAL_ELECTORATE.total.voters / FINAL_ELECTORATE.total.electorate) * 100
+      : 0;
 
   /**
    * 지도용 — 지역마다 선두 후보와 투표율을 함께 담아 두 지표를 한 번에 처리한다.
@@ -249,10 +262,30 @@ export function Dashboard() {
             </p>
           ) : (
             <div className="flex flex-col gap-6">
+              {/* 선거인단 투표 현황 — 지역 누적과 범위가 다른 공식 모수 */}
+              <div className="grid gap-4 sm:grid-cols-3">
+                {FINAL_ELECTORATE.rows.map((r) => (
+                  <StatTile
+                    key={r.label}
+                    label={r.label}
+                    value={pct((r.voters / r.electorate) * 100)}
+                    note={`${num(r.voters)}명 / ${num(r.electorate)}명`}
+                  />
+                ))}
+                <StatTile
+                  label="총합"
+                  value={pct(finalTurnout)}
+                  note={`${num(FINAL_ELECTORATE.total.voters)}명 / ${num(
+                    FINAL_ELECTORATE.total.electorate,
+                  )}명`}
+                />
+              </div>
+
               {finalLeader ? (
                 <FinalResultBlock
                   race="leader"
                   results={finalLeader}
+                  seeded={!finalResult.leader}
                   onClear={() => clearFinalRace("leader")}
                 />
               ) : null}
@@ -260,9 +293,16 @@ export function Dashboard() {
                 <FinalResultBlock
                   race="supreme"
                   results={finalSupreme}
+                  seeded={!finalResult.supreme}
                   onClear={() => clearFinalRace("supreme")}
                 />
               ) : null}
+
+              <p className="text-xs" style={{ color: "var(--viz-muted)" }}>
+                최종 득표율은 ① {CONVENTION.weightNote} ② {CONVENTION.formula}로
+                산정됩니다. 최종 집계표에 없는 후보는 0%가 아니라 항목 자체를
+                비워 두었습니다.
+              </p>
             </div>
           )}
         </Panel>
@@ -271,7 +311,7 @@ export function Dashboard() {
         <Panel
           title="당대표 누적 득표율"
           copyImage
-          subtitle={`집계 지역 ${totals.regions}곳 · 총 유효표 ${num(leaderTotal)}표`}
+          subtitle={`1순위 기준 · 집계 지역 ${totals.regions}곳 · 총 유효표 ${num(leaderTotal)}표`}
           action={<Legend items={legendItems("leader")} />}
         >
           {asTable ? (
@@ -310,11 +350,21 @@ export function Dashboard() {
                   badge: String(c.no),
                   value: c.votes,
                   valueLabel: `${num(c.votes)}표 · ${pct(c.share)}`,
+                  valueBadge: c.droppedOut?.label,
                   colorVar: LEADER_COLORS[c.no - 1],
+                  dim: Boolean(c.droppedOut),
                   tooltip: [
                     { label: "득표수", value: `${num(c.votes)}표` },
                     { label: "득표율", value: pct(c.share) },
                     { label: "순위", value: `${c.rank}위` },
+                    ...(c.droppedOut
+                      ? [
+                          {
+                            label: c.droppedOut.label,
+                            value: shortDate(c.droppedOut.date),
+                          },
+                        ]
+                      : []),
                   ],
                 }))}
               />
@@ -326,7 +376,7 @@ export function Dashboard() {
         <Panel
           title="당대표 지역별 득표율"
           copyImage
-          subtitle="지역마다 같은 척도(0–100%)로 비교"
+          subtitle="1순위 기준 · 지역마다 같은 척도(0–100%)로 비교"
           action={<Legend items={legendItems("leader")} />}
         >
           {asTable ? (
@@ -382,7 +432,7 @@ export function Dashboard() {
         <Panel
           title="지역 외 선거인단"
           copyImage
-          subtitle="권역 순회경선에 포함되지 않는 3개 투표 · 발표 전에는 빈 칸으로 둡니다"
+          subtitle="권역 순회경선에 포함되지 않는 3개 투표 · 자료가 없는 칸은 비워 둡니다"
         >
           {asTable ? (
             <DataTable
@@ -506,24 +556,33 @@ export function Dashboard() {
                   badge: `${c.rank}위`,
                   value: c.votes,
                   valueLabel: `${num(c.votes)}표 · ${pct(c.share)}`,
+                  valueBadge: c.droppedOut?.label,
                   colorVar: "--viz-s1",
-                  dim: c.rank > SUPREME_SEATS,
+                  dim: c.rank > SUPREME_SEATS || Boolean(c.droppedOut),
                   tooltip: [
                     { label: "기호", value: String(c.no) },
                     { label: "득표수", value: `${num(c.votes)}표` },
                     { label: "득표율", value: pct(c.share) },
-                    {
-                      label: "선출권",
-                      value: c.rank <= SUPREME_SEATS ? "당선권" : "당선권 밖",
-                    },
+                    c.droppedOut
+                      ? {
+                          label: c.droppedOut.label,
+                          value: shortDate(c.droppedOut.date),
+                        }
+                      : {
+                          label: "선출권",
+                          value:
+                            c.rank <= SUPREME_SEATS ? "당선권" : "당선권 밖",
+                        },
                   ],
                 }))}
             />
           )}
           {asTable ? null : (
             <p className="text-xs" style={{ color: "var(--viz-muted)" }}>
-              흐리게 표시된 막대는 상위 {SUPREME_SEATS}명(당선권) 밖입니다.
-              순위는 라벨로도 표시되므로 색에만 의존하지 않습니다.
+              흐리게 표시된 막대는 상위 {SUPREME_SEATS}명(당선권) 밖이거나 중도
+              사퇴한 후보입니다. 순위와 사퇴 여부는 라벨로도 표시되므로 색에만
+              의존하지 않습니다. 사퇴 후보의 표는 최종 집계에서 재배분 없이
+              빠집니다.
             </p>
           )}
         </Panel>
@@ -644,8 +703,9 @@ export function Dashboard() {
               style={{ color: "var(--viz-text-secondary)" }}
             >
               출처: 더불어민주당 중앙당 선거관리위원회 보도자료 — 제3차
-              당대표·최고위원 선출 순회경선 충청권(2026.08.01.) 및
-              울산·부산·경남 권리당원 투표결과.
+              당대표·최고위원 선출 순회경선 권역별 권리당원 투표결과(2026.08.01.
+              ~ 08.16.) 및 「제3차 정기전국당원대회 당대표·최고위원 선거
+              결과」(2026.08.17.).
             </p>
             <p className="text-xs" style={{ color: "var(--viz-muted)" }}>
               직접 입력한 누적값은 이 브라우저에만 저장되며, 공식 집계가
@@ -680,41 +740,53 @@ export function Dashboard() {
 function FinalResultBlock({
   race,
   results,
+  seeded,
   onClear,
 }: {
   race: Race;
   results: FinalCandidateResult[];
+  /** 보도자료 기본값인지 (직접 입력해 덮어쓴 값과 구분) */
+  seeded: boolean;
   onClear: () => void;
 }) {
   const ranked = [...results].sort((a, b) => a.rank - b.rank);
-  const winner = ranked[0];
+  const elected = ranked.filter((c) => c.elected);
   const hasPoll = results.some((r) => r.poll !== null);
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-baseline justify-between">
+      <div className="flex items-baseline justify-between gap-2">
         <h3 className="text-sm font-semibold">{RACE_LABEL[race]} 최종 순위</h3>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 text-xs"
-          onClick={onClear}
-        >
-          지우기
-        </Button>
+        {seeded ? (
+          <span className="text-xs" style={{ color: "var(--viz-muted)" }}>
+            보도자료
+          </span>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={onClear}
+          >
+            보도자료 값으로
+          </Button>
+        )}
       </div>
-      {winner ? (
+      {elected.length > 0 ? (
         <p className="text-sm" style={{ color: "var(--viz-text-secondary)" }}>
-          1위{" "}
+          당선{" "}
           <span
             className="font-semibold"
             style={{ color: "var(--viz-text-primary)" }}
           >
-            {winner.name}
-          </span>{" "}
-          {pct(winner.combined)}
+            {elected.map((c) => c.name).join(" · ")}
+          </span>
+          {elected.length === 1 ? ` ${pct(elected[0].combined)}` : null}
         </p>
       ) : null}
+      <p className="text-xs" style={{ color: "var(--viz-muted)" }}>
+        {FINAL_GAP_NOTE[race]}
+      </p>
       <BarList
         max={100}
         labelWidth="6rem"
@@ -724,17 +796,30 @@ function FinalResultBlock({
           badge: `${c.rank}위`,
           value: c.combined,
           valueLabel: pct(c.combined, 2),
+          valueBadge: c.elected ? "당선" : undefined,
           colorVar: race === "leader" ? LEADER_COLORS[c.no - 1] : "--viz-s1",
-          tooltip: hasPoll
-            ? [
-                { label: "권리당원·대의원", value: pct(c.party) },
-                {
-                  label: "국민여론조사",
-                  value: c.poll !== null ? pct(c.poll) : "—",
-                },
-                { label: "합산", value: pct(c.combined) },
-              ]
-            : [{ label: "권리당원·대의원", value: pct(c.party) }],
+          dim: !c.elected,
+          tooltip: [
+            ...(c.breakdown
+              ? [
+                  {
+                    label: "전국대의원",
+                    value: `${num(c.breakdown.delegate)}표`,
+                  },
+                  { label: "권리당원", value: `${num(c.breakdown.member)}표` },
+                ]
+              : []),
+            { label: "권리당원·대의원", value: pct(c.party) },
+            ...(hasPoll
+              ? [
+                  {
+                    label: "국민여론조사",
+                    value: c.poll !== null ? pct(c.poll) : "—",
+                  },
+                  { label: "최종", value: pct(c.combined) },
+                ]
+              : []),
+          ],
         }))}
       />
     </div>

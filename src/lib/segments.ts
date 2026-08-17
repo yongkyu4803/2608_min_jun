@@ -34,8 +34,14 @@ export type SegmentEntry = {
   /** poll 방식 — 응답자수(표본) */
   samples?: number;
   /**
+   * 별도 발표 없이 다른 집계에 흡수된 경우의 사유.
+   * 발표일이 지났는데도 값이 없으면 화면이 '발표 예정'이라 거짓말하므로, 이 문구로 대체한다.
+   */
+  absorbed?: string;
+  /**
    * 기호 → 값. 아직 발표되지 않았으면 null (0으로 두면 득표율이 0%로 거짓말한다).
    * 최고위원 자료가 따로 없으면 supreme 은 null 로 남긴다.
+   * 최종 집계표에 없는 후보(사퇴 등)는 키를 넣지 않는다 — 0표와 구분해야 한다.
    */
   results: Record<Race, Record<number, number> | null>;
 };
@@ -62,7 +68,13 @@ export const SEGMENTS: SegmentEntry[] = [
     note: "전국대의원 온라인 투표 · 8.17",
     kind: "votes",
     scheduled: "2026-08-17",
-    results: { leader: null, supreme: null },
+    date: "2026-08-17",
+    electorate: 17_667,
+    voters: 14_306,
+    results: {
+      leader: { 2: 4_765, 3: 9_541 },
+      supreme: { 1: 1_955, 2: 8_513, 4: 2_711, 5: 3_990, 6: 3_649, 7: 7_777 },
+    },
   },
   {
     key: "overseas",
@@ -70,6 +82,7 @@ export const SEGMENTS: SegmentEntry[] = [
     note: "재외국민 당원 투표 · 8.9 ~ 8.11",
     kind: "votes",
     scheduled: "2026-08-17",
+    absorbed: "권리당원·대의원 집계에 합산 · 별도 수치 미공개",
     results: { leader: null, supreme: null },
   },
   {
@@ -78,7 +91,11 @@ export const SEGMENTS: SegmentEntry[] = [
     note: "국민여론조사 · 8.14 ~ 8.15 · 최종 반영 30%",
     kind: "poll",
     scheduled: "2026-08-17",
-    results: { leader: null, supreme: null },
+    date: "2026-08-17",
+    results: {
+      leader: { 2: 50.7, 3: 49.3 },
+      supreme: { 1: 17.88, 2: 14.9, 4: 16.33, 5: 17.24, 6: 18.49, 7: 15.15 },
+    },
   },
 ];
 
@@ -98,7 +115,10 @@ export function segmentResults(
   const raw = segment.results[race];
   if (!raw) return null;
 
-  const rows = CANDIDATES[race].map((c) => ({ ...c, value: raw[c.no] ?? 0 }));
+  // 집계표에 없는 후보는 빼고 그린다 — 0표로 채우면 최하위 막대로 거짓말이 된다
+  const rows = CANDIDATES[race]
+    .filter((c) => raw[c.no] !== undefined)
+    .map((c) => ({ ...c, value: raw[c.no] }));
   const total = rows.reduce((acc, r) => acc + r.value, 0);
   const ordered = [...rows].sort((a, b) => b.value - a.value);
 

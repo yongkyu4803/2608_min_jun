@@ -83,6 +83,11 @@ export const CONVENTION = {
   /** formula 를 가중합산에 쓰는 실제 계수 — 문구가 바뀌면 이 값도 같이 맞춰야 한다 */
   partyWeight: 0.7,
   pollWeight: 0.3,
+  /**
+   * 보도자료 각주 ① — formula 위에 따로 얹히는 보정.
+   * 계수를 우리가 재현할 수 없어 발표된 최종 득표율(FinalShare.official)을 그대로 쓴다.
+   */
+  weightNote: "대구·경북·경남 전국대의원 및 권리당원 유효투표 결과 가중치 5% 반영",
   pollPeriod: ["2026-08-14", "2026-08-15"] as [string, string],
 };
 

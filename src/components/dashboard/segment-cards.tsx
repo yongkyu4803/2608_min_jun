@@ -1,7 +1,7 @@
 "use client";
 
 import { BarList, type BarRow } from "@/components/viz/bar-list";
-import { num, pct } from "@/lib/election";
+import { CANDIDATES, num, pct } from "@/lib/election";
 import {
   SEGMENTS,
   segmentResults,
@@ -76,7 +76,11 @@ function SegmentCard({
             border: rows ? "none" : "1px solid var(--viz-hairline)",
           }}
         >
-          {rows ? shortDate(segment.date ?? segment.scheduled) : "미발표"}
+          {rows
+            ? shortDate(segment.date ?? segment.scheduled)
+            : segment.absorbed
+              ? "합산"
+              : "미발표"}
         </span>
       </div>
 
@@ -113,6 +117,18 @@ function SegmentCard({
                 : "선거인수 미공개"}
           </span>
         </>
+      ) : segment.absorbed ? (
+        <div className="flex flex-col gap-1 py-2">
+          <span
+            className="text-sm"
+            style={{ color: "var(--viz-text-secondary)" }}
+          >
+            별도 발표 없음
+          </span>
+          <span className="text-xs" style={{ color: "var(--viz-muted)" }}>
+            {segment.absorbed}
+          </span>
+        </div>
       ) : (
         <div className="flex flex-col gap-1 py-2">
           <span
@@ -131,15 +147,24 @@ function SegmentCard({
   );
 }
 
-/** 표 보기 대응물 — 미발표는 "—" 로 남긴다 */
+/** 표 보기 대응물 — 자료가 없는 칸은 "—" 로 남긴다 */
 export function segmentTableRows() {
   return SEGMENTS.map((segment) => {
     const rows = segmentResults(segment, "leader");
     const turnout = segmentTurnout(segment);
+    // 후보별 열을 항상 CANDIDATES 순서로 맞춘다 — 집계표에 없는 후보가 있어도 열이 밀리지 않게
+    const byNo = new Map(rows?.map((c) => [c.no, c]));
     return [
       segment.label,
-      rows ? shortDate(segment.date ?? segment.scheduled) : "미발표",
-      ...(rows ? rows.map((c) => pct(c.share, 1)) : ["—", "—", "—"]),
+      rows
+        ? shortDate(segment.date ?? segment.scheduled)
+        : segment.absorbed
+          ? "합산"
+          : "미발표",
+      ...CANDIDATES.leader.map((c) => {
+        const row = byNo.get(c.no);
+        return row ? pct(row.share, 1) : "—";
+      }),
       turnout !== null ? pct(turnout) : "—",
     ];
   });

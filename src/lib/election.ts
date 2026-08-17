@@ -6,25 +6,39 @@ export type Candidate = {
   /** 기호 */
   no: number;
   name: string;
+  /**
+   * 최종 집계에서 빠진 사유.
+   * 지역 순회경선에는 표가 그대로 남아 있으므로 누적 화면에서 구분 표시가 필요하다.
+   */
+  droppedOut?: { label: string; date: string };
 };
 
-/** 당대표 후보 (기호순) */
+/**
+ * 당대표 후보 (기호순).
+ * 선호투표제 — 1순위 과반 득표자가 없으면 최하위 후보가 탈락하고 그 표는 차순위 후보로 넘어간다.
+ */
 export const LEADER_CANDIDATES: Candidate[] = [
-  { no: 1, name: "송영길" },
+  {
+    no: 1,
+    name: "송영길",
+    // 사퇴가 아니라 1순위 최하위(8.58%)로 탈락 — 그의 표는 2순위대로 재배분됐다
+    droppedOut: { label: "탈락", date: "2026-08-17" },
+  },
   { no: 2, name: "정청래" },
   { no: 3, name: "김민석" },
 ];
 
-/** 최고위원 후보 (기호순) */
+/** 최고위원 후보 (기호순). 선호투표가 아니라 연기명 투표라 사퇴 후보의 표는 재배분되지 않는다. */
 export const SUPREME_CANDIDATES: Candidate[] = [
   { no: 1, name: "최민희" },
   { no: 2, name: "김　용" },
-  { no: 3, name: "김영호" },
+  // 8.16 서울·경기 결과 발표 직후 두 후보가 사퇴하며 김용 지지를 선언했다
+  { no: 3, name: "김영호", droppedOut: { label: "사퇴", date: "2026-08-16" } },
   { no: 4, name: "서미화" },
   { no: 5, name: "한민수" },
   { no: 6, name: "이성윤" },
   { no: 7, name: "박선원" },
-  { no: 8, name: "임미애" },
+  { no: 8, name: "임미애", droppedOut: { label: "사퇴", date: "2026-08-16" } },
 ];
 
 export const CANDIDATES: Record<Race, Candidate[]> = {
@@ -423,41 +437,138 @@ function sum(xs: number[]) {
 /* 전당대회 최종 결과 (권리당원·대의원 + 국민여론조사 가중합산)          */
 /* ------------------------------------------------------------------ */
 
-/**
- * 후보 기호 → 최종 득표율(%).
- * poll 은 해당 경선에 국민여론조사가 없으면(예: 최고위원) null — party 그대로가 최종 순위가 된다.
- */
-export type FinalShares = Record<number, { party: number; poll: number | null }>;
-
-export type FinalCandidateResult = Candidate & {
-  /** 권리당원·대의원 최종 득표율 (%) */
+/** 한 후보의 최종 득표율 구성 */
+export type FinalShare = {
+  /** 전국대의원·권리당원 통합 득표율 (%) */
   party: number;
-  /** 국민여론조사 득표율 (%) — 없으면 null */
+  /** 국민여론조사 득표율 (%) — 해당 경선에 여론조사가 없으면 null */
   poll: number | null;
-  /** CONVENTION 가중치로 합산한 최종 득표율 (%). poll 이 없으면 party 와 같다 */
-  combined: number;
-  rank: number;
+  /**
+   * 보도자료에 인쇄된 최종 득표율 (%). 있으면 가중합산 대신 이 값을 쓴다.
+   * 당이 발표한 숫자를 우리가 다시 계산해 0.01%p 어긋나게 만들지 않기 위함이다 —
+   * 대구·경북·경남 5% 가중치와 반올림 때문에 재계산값이 미세하게 벌어진다.
+   */
+  official?: number;
+  /** 합산 전 원표 — 있으면 툴팁에 그대로 보여준다 */
+  breakdown?: { delegate: number; member: number };
 };
+
+/**
+ * 후보 기호 → 최종 득표율.
+ * 최종 집계표에 없는 후보(사퇴 등)는 키 자체를 넣지 않는다 — 0%로 채우면 최하위로 그려져 거짓말이 된다.
+ */
+export type FinalShares = Record<number, FinalShare>;
+
+export type FinalCandidateResult = Candidate &
+  FinalShare & {
+    /** 발표된 최종 득표율, 없으면 CONVENTION 가중치로 합산한 값 (%) */
+    combined: number;
+    rank: number;
+    /** 선출 여부 — 당대표는 1위, 최고위원은 상위 SUPREME_SEATS 명 */
+    elected: boolean;
+  };
 
 /** 표수 누적(resultsOf)과 달리, 이미 발표된 득표율(%) 두 개를 가중합산만 한다 — 재계산할 원표가 없다. */
 export function finalResultsOf(
   shares: FinalShares,
   race: Race,
 ): FinalCandidateResult[] {
-  const list = CANDIDATES[race].map((c) => {
-    const s = shares[c.no] ?? { party: 0, poll: null };
-    const combined =
-      s.poll === null
-        ? s.party
-        : s.party * CONVENTION.partyWeight + s.poll * CONVENTION.pollWeight;
-    return { ...c, party: s.party, poll: s.poll, combined };
-  });
+  const list = CANDIDATES[race]
+    .filter((c) => shares[c.no] !== undefined)
+    .map((c) => {
+      const s = shares[c.no];
+      const combined =
+        s.official ??
+        (s.poll === null
+          ? s.party
+          : s.party * CONVENTION.partyWeight + s.poll * CONVENTION.pollWeight);
+      return { ...c, ...s, combined };
+    });
   const ordered = [...list].sort((a, b) => b.combined - a.combined);
-  return list.map((v) => ({
-    ...v,
-    rank: ordered.findIndex((o) => o.no === v.no) + 1,
-  }));
+  const seats = race === "supreme" ? SUPREME_SEATS : 1;
+  return list.map((v) => {
+    const rank = ordered.findIndex((o) => o.no === v.no) + 1;
+    return { ...v, rank, elected: rank <= seats };
+  });
 }
+
+/* ------------------------------------------------------------------ */
+/* 최종 결과 보도자료 (2026.08.17.)                                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * 중앙당 선거관리위원회 「제3차 정기전국당원대회 당대표·최고위원 선거 결과」 중 선거인단 투표 현황.
+ * 지역 순회경선 누적(SEED_ENTRIES)과 집계 범위가 달라 그대로 비교되지 않는다 — 패널을 나눠 둔 이유다.
+ */
+export const FINAL_ELECTORATE = {
+  date: "2026-08-17",
+  rows: [
+    { label: "전국대의원", electorate: 17_667, voters: 14_306 },
+    { label: "권리당원", electorate: 1_527_261, voters: 769_051 },
+  ],
+  total: { electorate: 1_544_928, voters: 783_357 },
+};
+
+type FinalSeedRow = {
+  no: number;
+  /** 전국대의원 득표수 */
+  delegate: number;
+  /** 권리당원 득표수 */
+  member: number;
+  /** 국민여론조사 득표율 (%) */
+  poll: number;
+  /** 보도자료에 인쇄된 최종 득표율 (%) */
+  official: number;
+};
+
+/** 전국대의원·권리당원을 하나의 유효표로 합쳐 득표율을 낸다 — 보도자료 최종득표율이 이 방식이다 */
+function finalSharesOf(rows: FinalSeedRow[]): FinalShares {
+  const total = sum(rows.map((r) => r.delegate + r.member));
+  return Object.fromEntries(
+    rows.map((r) => [
+      r.no,
+      {
+        party: total > 0 ? ((r.delegate + r.member) / total) * 100 : 0,
+        poll: r.poll,
+        official: r.official,
+        breakdown: { delegate: r.delegate, member: r.member },
+      },
+    ]),
+  );
+}
+
+/**
+ * 지역 누적(SEED_ENTRIES)과 최종 결과의 후보별 득표수가 다른 이유 — 경선마다 다르다.
+ *
+ * 당대표는 선호투표다. 1순위 과반 득표자가 없으면 최하위 후보가 탈락하고 그 표는 차순위 후보로
+ * 넘어간다. 넘어가는 비율은 유권자가 실제로 적어 낸 순위라 1순위 비율로는 계산해 낼 수 없다 —
+ * 발표된 최종 득표율(official)을 재계산하지 않고 그대로 쓰는 또 하나의 이유다.
+ *
+ * 최고위원은 선호투표가 아니라서 재배분이 없다. 사퇴한 후보의 표는 유효표 총계에서 그대로 빠진다.
+ */
+export const FINAL_GAP_NOTE: Record<Race, string> = {
+  leader:
+    "당대표는 선호투표입니다. 1순위 과반 득표자가 없어 최하위 후보가 탈락하고 그 표가 차순위 후보로 넘어갔습니다 — 위 지역별 집계는 1순위 기준이라 최종 득표수와 다릅니다.",
+  supreme:
+    "최고위원은 선호투표가 아닙니다. 중도 사퇴한 후보의 표는 남은 후보에게 재배분되지 않고 유효표에서 그대로 빠집니다 — 위 지역별 집계와 총계가 다릅니다.",
+};
+
+export const SEED_FINAL_SHARES: Partial<Record<Race, FinalShares>> = {
+  /* 기호 1 송영길은 1순위 최하위로 탈락해 최종 집계표에 없다 — 0%가 아니라 '자료 없음'으로 둔다 */
+  leader: finalSharesOf([
+    { no: 2, delegate: 4_765, member: 338_809, poll: 50.7, official: 45.92 },
+    { no: 3, delegate: 9_541, member: 430_242, poll: 49.3, official: 54.08 },
+  ]),
+  /* 기호 3 김영호 · 8 임미애도 최종 집계표에 없다 (재배분 없이 유효표에서 빠졌다) */
+  supreme: finalSharesOf([
+    { no: 1, delegate: 1_955, member: 260_098, poll: 17.88, official: 18.35 },
+    { no: 2, delegate: 8_513, member: 209_432, poll: 14.9, official: 15.26 },
+    { no: 4, delegate: 2_711, member: 233_562, poll: 16.33, official: 16.6 },
+    { no: 5, delegate: 3_990, member: 211_806, poll: 17.24, official: 15.86 },
+    { no: 6, delegate: 3_649, member: 214_499, poll: 18.49, official: 16.35 },
+    { no: 7, delegate: 7_777, member: 255_262, poll: 15.15, official: 17.57 },
+  ]),
+};
 
 /* ------------------------------------------------------------------ */
 /* 포맷                                                                */
