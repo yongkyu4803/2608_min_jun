@@ -5,6 +5,10 @@ import { AddEntryForm } from "@/components/dashboard/add-entry-form";
 import { BannerSlots } from "@/components/dashboard/banner-slots";
 import { KoreaMap, type MapDatum } from "@/components/dashboard/korea-map";
 import { ScheduleStrip } from "@/components/dashboard/schedule-strip";
+import {
+  SegmentCards,
+  segmentTableRows,
+} from "@/components/dashboard/segment-cards";
 import { VisitorCount } from "@/components/dashboard/visitor-count";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BarList, Legend, type BarRow } from "@/components/viz/bar-list";
@@ -322,6 +326,32 @@ export function Dashboard() {
               ))}
             </div>
           )}
+        </Panel>
+
+        {/* 지역 밖 선거인단 — 대의원 · 재외국민 · 국민경선 */}
+        <Panel
+          title="지역 외 선거인단"
+          copyImage
+          subtitle="권역 순회경선에 포함되지 않는 3개 투표 · 발표 전에는 빈 칸으로 둡니다"
+        >
+          {asTable ? (
+            <DataTable
+              columns={[
+                "구분",
+                "발표",
+                ...CANDIDATES.leader.map((c) => c.name),
+                "투표율",
+              ]}
+              rows={segmentTableRows()}
+            />
+          ) : (
+            <SegmentCards colorVars={LEADER_COLORS} />
+          )}
+          <p className="text-xs" style={{ color: "var(--viz-muted)" }}>
+            이 세 가지는 지역 누적 집계(지도·지역별 득표율·투표율)에 들어가지
+            않습니다. 최종 결과는 권리당원·대의원 70% + 국민여론조사 30%로
+            합산되므로, 지역 표에 그대로 더하면 이중 계산이 됩니다.
+          </p>
         </Panel>
 
         {/* 지도 */}
