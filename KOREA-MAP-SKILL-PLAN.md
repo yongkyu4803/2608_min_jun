@@ -192,6 +192,6 @@ SKILL.md 에 명시하고 매 실행 후 수행한다.
 
 | 파일 | 내용 |
 |---|---|
-| `scripts/build-korea-map.js` | GeoJSON → SVG 패스 변환기 (RDP 링 분할 포함) |
+| `scripts/build-korea-map.mjs` | GeoJSON → SVG 패스 변환기 (RDP 링 분할 포함) |
 | `src/lib/korea-map.ts` | 생성된 시도 17개 패스 (63KB) |
 | `src/components/dashboard/korea-map.tsx` | 단계구분도 컴포넌트 (라벨 오프셋·순위 목록·범례) |

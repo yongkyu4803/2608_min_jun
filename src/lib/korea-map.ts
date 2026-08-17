@@ -1,4 +1,4 @@
-// 자동 생성 파일 — scripts/build-korea-map.js 로 만들어집니다. 직접 수정하지 마세요.
+// 자동 생성 파일 — scripts/build-korea-map.mjs 로 만들어집니다. 직접 수정하지 마세요.
 //
 // 출처: southkorea/southkorea-maps — KOSTAT(통계청) 센서스용 행정구역경계 2013
 //       https://github.com/southkorea/southkorea-maps

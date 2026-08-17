@@ -4,11 +4,11 @@
  *
  * 경계가 갱신되면 다시 받아서 재생성:
  *   curl -sO https://raw.githubusercontent.com/southkorea/southkorea-maps/master/kostat/2013/json/skorea_provinces_geo.json
- *   node --stack-size=8000 scripts/build-korea-map.js skorea_provinces_geo.json src/lib/korea-map.ts
+ *   node --stack-size=8000 scripts/build-korea-map.mjs skorea_provinces_geo.json src/lib/korea-map.ts
  *
  * 원본이 27MB라 기본 스택으로는 RDP 재귀가 넘친다 — --stack-size 필요.
  */
-const fs = require("fs");
+import fs from "node:fs";
 
 const SHORT = {
   서울특별시: "서울",
