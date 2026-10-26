@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Firebase 클라이언트 설정 (API 키 포함) — 저장소에 올리지 않는다
+android/app/google-services.json
