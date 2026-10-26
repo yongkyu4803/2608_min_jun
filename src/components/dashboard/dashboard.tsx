@@ -11,6 +11,7 @@ import {
   segmentTableRows,
 } from "@/components/dashboard/segment-cards";
 import { VisitorCount } from "@/components/dashboard/visitor-count";
+import { NotificationInbox } from "@/components/notification-inbox";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BarList, Legend, type BarRow } from "@/components/viz/bar-list";
 import { DataTable, HeroFigure, Panel, StatTile } from "@/components/viz/panel";
@@ -185,6 +186,7 @@ export function Dashboard() {
             >
               {asTable ? "차트로 보기" : "표로 보기"}
             </Button>
+            <NotificationInbox />
             <ThemeToggle />
             <AddEntryForm existingRegions={regions} onAdd={addEntry} />
           </div>
